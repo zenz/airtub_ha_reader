@@ -1,0 +1,9 @@
+{
+  "domain": "airtub_udp",
+  "name": "airtub_udp",
+  "version": "0.9",
+  "documentation": "https://ci.airfit.cn/airtub/ha.html",
+  "dependencies": [],
+  "codeowners": [],
+  "requirements": []
+}
