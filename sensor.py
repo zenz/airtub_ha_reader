@@ -52,13 +52,13 @@ class UDPMulticastSensor(SensorEntity):
         self._name = f"boiler_{device}_{key}"
         self._state = self._convert_to_number(initial_value)
         self._entity_id = entity_id
-        if key in ["cct", "cdt", "tct" "tdt", "odt", "tdf"]:
+        if key in ["cct", "cdt", "tct", "tdt", "odt", "tdf"]:
             self._attr_unit_of_measurement = UnitOfTemperature.CELSIUS
             self._attr_icon = "mdi:thermometer"
             self._attr_device_class = SensorDeviceClass.TEMPERATURE
             self._attr_state_class = "measurement"
             self._attr_precision = 0  # 温度精度为0
-        elif key in ["tft", "crt"]:
+        elif key in ["trt", "crt"]:
             self._attr_unit_of_measurement = UnitOfTemperature.CELSIUS
             self._attr_icon = "mdi:thermometer"
             self._attr_device_class = SensorDeviceClass.TEMPERATURE
@@ -75,7 +75,7 @@ class UDPMulticastSensor(SensorEntity):
             self._attr_icon = "mdi:numeric"
             self._attr_device_class = None
             self._attr_state_class = "measurement"
-            self._attr_precision = 0  # 温度精度为0
+            self._attr_precision = 0  # 默认精度为0
         hass.bus.async_listen(EVENT_NEW_DATA, self._handle_data_changed_event)
 
     @property
