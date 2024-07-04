@@ -4,7 +4,7 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.const import UnitOfTemperature, PERCENTAGE
 from homeassistant.components.sensor import SensorDeviceClass
-from . import DOMAIN, EVENT_NEW_DATA
+from ... import DOMAIN, EVENT_NEW_DATA
 
 _LOGGER = logging.getLogger(__name__)
 
