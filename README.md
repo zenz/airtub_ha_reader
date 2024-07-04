@@ -2,8 +2,15 @@
 
 本组件实现雅图伴侣运行数据 在Home Assistant 中展示。
 
-### 手动安装
-1、在 Home Assistant 的 custom_components 目录下新建一个 airtub_udp 目录，然后将本项目custom_components目录下所有文件复制到新建的 airtub_udp 目录下。
+### 安装
+1、手动安装：在 Home Assistant 的 custom_components 目录下新建一个 airtub_udp 目录，然后将本项目custom_components目录下所有文件复制到新建的 airtub_udp 目录下。
+
+1、HACS安装：打开HACS，选择【集成】，点击右上角【三个点】，选择【自定义存储库】，在弹出的对话框中，填入以下信息：
+```
+存储库填写 zenz/airtub_ha_reader
+类别选择 集成
+```
+然后点击【添加】，在弹出的对话框中，选择【安装】即可。
 
 2、在 configuration.yaml 中添加如下配置：
 ```yaml
