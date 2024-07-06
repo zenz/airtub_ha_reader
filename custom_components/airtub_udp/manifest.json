@@ -4,6 +4,8 @@
   "version": "0.9",
   "documentation": "https://github.com/zenz/airtub_ha_reader",
   "dependencies": [],
-  "codeowners": [],
+  "codeowners": [
+    "simon@airfit.cn"
+  ],
   "requirements": []
 }
