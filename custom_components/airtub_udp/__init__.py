@@ -17,6 +17,14 @@ _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "airtub_udp"
 EVENT_NEW_DATA = "airtub_new_data_received"
+MSG_TYPE = 4
+ATTR_JSON_DATA = "cmd"
+SERVICE_RECEIVE_JSON = "sender"
+SERVICE_RECEIVE_JSON_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_JSON_DATA): cv.string,
+    }
+)
 
 CONFIG_SCHEMA = vol.Schema(
     {
@@ -32,10 +40,32 @@ CONFIG_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
+RETRY_MAX = 5
+msg_recevied = False
+sock = None
+
 
 def xor_crypt(a: str, b: str):
     """XOR decode."""
     return "".join(chr(ord(x) ^ ord(y)) for x, y in zip(a, cycle(b)))
+
+
+def pack_data(msgtype: int, message: str, secret: str):
+    """Data encode."""
+    len_num = len(message)
+    crypt_data = xor_crypt(message, secret).encode("ascii")
+    crc = zlib.crc32(crypt_data).to_bytes(4, "little")
+
+    send_data = bytearray()
+    send_data.extend(bytearray([msgtype, len_num, 0, 0]))
+    send_data.extend(crc)
+    send_data.extend(crypt_data)
+
+    empty_len = 180 - len_num
+    empty_array = bytearray(empty_len)
+    send_data.extend(empty_array)
+
+    return bytes(send_data)
 
 
 def unpack_data(pack_data: bytes, secret: str):
@@ -59,27 +89,38 @@ async def udp_listener(
     device: str,
 ):
     """Listen for UDP multicast messages."""
+    global msg_received
+    global sock
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(("", multicast_port))
+    sock.bind(("0.0.0.0", multicast_port))
     mreq = struct.pack("=4sl", socket.inet_aton(multicast_group), socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    sock.setblocking(False)
 
     loop = asyncio.get_running_loop()
-    sock.setblocking(False)
 
     _LOGGER.debug(f"Registered udp listener")
 
     while True:
         try:
-            data = await loop.sock_recv(sock, 1024)
+            data, addr = await loop.sock_recvfrom(sock, 1024)
             if len(data) != 0:
                 dataid, datalen, realdata, crc1, crc2 = unpack_data(data, secret)
                 if crc1 == crc2 and device in realdata.decode("ascii", errors="ignore"):
                     data_content = realdata.decode("ascii", errors="ignore").replace(
                         f'"dev":"{device}",', ""
                     )
+                    if (
+                        hass.data[DOMAIN].get("ip") is None
+                        or hass.data[DOMAIN]["ip"] != addr[0]
+                    ):
+                        hass.data[DOMAIN]["ip"] = addr[0]
                     data_dict = json.loads(data_content)
+                    if "rec" in data_dict:
+                        _LOGGER.debug(f"Command confirmed!")
+                        msg_received = True
+                        hass.states.async_set(f"{DOMAIN}.status", "ready")
                     # Ensure 'mod' and 'flt' keys are present
                     if "mod" not in data_dict:
                         data_dict["mod"] = 0
@@ -87,7 +128,6 @@ async def udp_listener(
                         data_dict["flt"] = 0
                     hass.data[DOMAIN]["data"] = data_dict
                     hass.bus.async_fire(EVENT_NEW_DATA)
-                    # _LOGGER.warning(f"Received data: {data_content}")
         except socket.error as e:
             _LOGGER.error(f"Socket error: {e}")
             await asyncio.sleep(1)  # Wait a bit before retrying in case of error
@@ -96,6 +136,7 @@ async def udp_listener(
 
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the UDP Multicast component."""
+
     conf = config[DOMAIN]
     multicast_group = conf["multicast_group"]
     multicast_port = conf["multicast_port"]
@@ -103,15 +144,69 @@ async def async_setup(hass: HomeAssistant, config: dict):
     device = conf["device"]
 
     # _LOGGER.warning(f"airtub_udp setup {device} with {multicast_group}:{multicast_port}")
+    async def handle_json_service(call):
+        global msg_received
+        global sock
+        json_data = call.data.get(ATTR_JSON_DATA)
+        remote_ip = hass.data[DOMAIN]["ip"]
+        if remote_ip == None:
+            return True
+        try:
+            parsed_data = json.loads(json_data)
+            parsed_data["tar"] = device
+            parsed_data["dev"] = f"{DOMAIN}"
+            parsed_data["pwr"] = 5
 
-    hass.data[DOMAIN] = {"device": device, "data": {}}
+            hass.states.async_set(f"{DOMAIN}.status", "received")
+            loop = asyncio.get_running_loop()
+            retry = 0
+            msg_received = False
+            try:
+                while (not msg_received) and retry < RETRY_MAX:
+                    parsed_data["try"] = retry
+                    retry = retry + 1
+                    encrypted_data = pack_data(
+                        MSG_TYPE, json.dumps(parsed_data, separators=(",", ":")), secret
+                    )
+                    await asyncio.sleep(1)  # 延时0.5秒
+                    # await loop.sock_sendto(sock, encrypted_data, (multicast_group, multicast_port))
+                    await loop.sock_sendto(
+                        sock, encrypted_data, (remote_ip, multicast_port)
+                    )
+                    hass.states.async_set(f"{DOMAIN}.status", "ready")
+                _LOGGER.warning(
+                    f"Sending JSON cmd to:{multicast_group} port:{multicast_port} with data:{parsed_data}"
+                )
+            except OSError as e:
+                _LOGGER.error(f"OS error occurred while sending data: {e}")
+            except socket.gaierror as e:
+                _LOGGER.error(f"Socket address error occurred while sending data: {e}")
 
-    hass.loop.create_task(
-        udp_listener(hass, multicast_group, multicast_port, secret, device)
-    )
+        except json.JSONDecodeError as e:
+            _LOGGER.error(f"Error decoding JSON: {e}")
+            hass.states.async_set(f"{DOMAIN}.status", "error")
 
-    hass.async_create_task(
-        discovery.async_load_platform(hass, "sensor", DOMAIN, {}, config)
-    )
+    try:
+        hass.data[DOMAIN] = {"device": device, "data": {}, "ip": None}
+
+        hass.loop.create_task(
+            udp_listener(hass, multicast_group, multicast_port, secret, device)
+        )
+
+        hass.async_create_task(
+            discovery.async_load_platform(hass, "sensor", DOMAIN, {}, config)
+        )
+
+        hass.states.async_set(f"{DOMAIN}.status", "ready")
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_RECEIVE_JSON,
+            handle_json_service,
+            schema=SERVICE_RECEIVE_JSON_SCHEMA,
+        )
+
+    except Exception as e:
+        _LOGGER.error(f"Error during setup: {e}")
+        return False
 
     return True
