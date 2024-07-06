@@ -174,7 +174,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
                         sock, encrypted_data, (remote_ip, multicast_port)
                     )
                     hass.states.async_set(f"{DOMAIN}.status", "ready")
-                _LOGGER.warning(
+                _LOGGER.debug(
                     f"Sending JSON cmd to:{multicast_group} port:{multicast_port} with data:{parsed_data}"
                 )
             except OSError as e:
