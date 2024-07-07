@@ -19,8 +19,12 @@ airtub_udp:
     multicast_port: 4211
     device: "your_device_serial"
     secret: "your_secret_key"
+
+climate:
+  - platform: airtub_udp
+    operate: auto
 ```
-其中 device 为注册壁挂炉序列号，secret 为注册壁挂炉密钥。
+其中 device 为注册壁挂炉序列号，secret 为注册壁挂炉密钥。operate为操作模式，可选值为auto、manual，auto为自动室温模式，manual为手动水温模式。
 
 3、重启 Home Assistant。
 

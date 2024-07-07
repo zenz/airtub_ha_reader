@@ -125,7 +125,7 @@ class UDPMulticastSensor(SensorEntity):
         try:
             return float(value)
         except ValueError:
-            _LOGGER.warning(f"Conversion failed for value: {value}, returning 0")
+            _LOGGER.debug(f"Conversion failed for value: {value}, returning 0")
             return 0
 
     @callback

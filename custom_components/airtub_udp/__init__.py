@@ -168,7 +168,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
                     encrypted_data = pack_data(
                         MSG_TYPE, json.dumps(parsed_data, separators=(",", ":")), secret
                     )
-                    await asyncio.sleep(1)  # 延时0.5秒
+                    await asyncio.sleep(1)  # 延时1秒
                     # await loop.sock_sendto(sock, encrypted_data, (multicast_group, multicast_port))
                     await loop.sock_sendto(
                         sock, encrypted_data, (remote_ip, multicast_port)
