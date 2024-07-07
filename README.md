@@ -18,7 +18,7 @@ airtub_udp:
     multicast_group: "224.0.1.3"
     multicast_port: 4211
     device: "your_device_serial"
-    secret: "your_secret_key"
+    secret: !secret airtub_password
 
 climate:
   - platform: airtub_udp
@@ -26,7 +26,12 @@ climate:
 ```
 其中 device 为注册壁挂炉序列号，secret 为注册壁挂炉密钥。operate为操作模式，可选值为auto、manual，auto为自动室温模式，manual为手动水温模式。
 
-3、重启 Home Assistant。
+3、在 secrets.yaml 中添加如下配置：
+```yaml
+airtub_password: "your_device_password"
+```
+
+4、重启 Home Assistant。
 
 ### 使用
 
@@ -56,7 +61,7 @@ _xxx 的各项解释如下：
 "tdf": 生活水启停温差(仅系统炉)
 ```
 
-发送指令
+提供的服务
 ```yaml
 service: airtub_udp.sender
 data:
