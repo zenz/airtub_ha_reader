@@ -48,6 +48,8 @@ class AirtubClimateDevice(ClimateEntity):
         self._name = name
         self._hass = hass
         self._mode = mode
+        self._attr_icon_ch = "mdi:radiator"
+        self._attr_icon_dhw = "mdi:shower"
         self._temperature = 0
         self._target_temperature = 0
         self._hvac_mode = HVACMode.OFF
@@ -75,6 +77,12 @@ class AirtubClimateDevice(ClimateEntity):
     def unique_id(self):
         """Return the unique ID of the climate device."""
         return self._name
+
+    @property
+    def icon(self):
+        if "_ch" in self._name:
+            return self._attr_icon_ch
+        return self._attr_icon_dhw
 
     @property
     def temperature_unit(self):
