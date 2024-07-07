@@ -22,7 +22,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the climate platform."""
     op_mode = 1 if config.get("operate") == "auto" else 0
-    _LOGGER.debug(f"Mode: {op_mode}")
+    # _LOGGER.debug(f"Mode: {op_mode}")
     device = hass.data[DOMAIN]["device"]
     device1 = f"{device}_ch"
     device2 = f"{device}_dhw"
@@ -104,7 +104,7 @@ class AirtubClimateDevice(ClimateEntity):
     def target_temperature(self):
         """Return the temperature we try to reach."""
         if "_ch" in self._name:
-            _LOGGER.debug(f"Mode in target_temperature {self._mode}")
+            # _LOGGER.debug(f"Mode in target_temperature {self._mode}")
             if self._mode:
                 return self._target_temperature
             return self._man_target_temperature
@@ -146,7 +146,7 @@ class AirtubClimateDevice(ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new target hvac mode."""
-        _LOGGER.debug(f"Try to change")
+        # _LOGGER.debug(f"Try to change")
         mode = "1" if hvac_mode == HVACMode.HEAT else "0"
         command = None
         if "_ch" in self._name:
