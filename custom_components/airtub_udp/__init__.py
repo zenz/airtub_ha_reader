@@ -120,7 +120,7 @@ async def udp_listener(
                     if "rec" in data_dict:
                         _LOGGER.debug(f"Command confirmed!")
                         msg_received = True
-                        del data["rec"]
+                        del data_dict["rec"]
                         hass.states.async_set(f"{DOMAIN}.status", "ready")
                     # Ensure 'mod' and 'flt' keys are present
                     if "mod" not in data_dict:
