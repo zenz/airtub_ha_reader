@@ -120,6 +120,7 @@ async def udp_listener(
                     if "rec" in data_dict:
                         _LOGGER.debug(f"Command confirmed!")
                         msg_received = True
+                        del data["rec"]
                         hass.states.async_set(f"{DOMAIN}.status", "ready")
                     # Ensure 'mod' and 'flt' keys are present
                     if "mod" not in data_dict:
@@ -157,7 +158,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
             parsed_data["dev"] = f"{DOMAIN}"
             parsed_data["pwr"] = 5
 
-            hass.states.async_set(f"{DOMAIN}.status", "received")
+            hass.states.async_set(f"{DOMAIN}.status", "busy")
             loop = asyncio.get_running_loop()
             retry = 0
             msg_received = False
@@ -173,7 +174,6 @@ async def async_setup(hass: HomeAssistant, config: dict):
                     await loop.sock_sendto(
                         sock, encrypted_data, (remote_ip, multicast_port)
                     )
-                    hass.states.async_set(f"{DOMAIN}.status", "ready")
                 _LOGGER.debug(
                     f"Sending JSON cmd to:{multicast_group} port:{multicast_port} with data:{parsed_data}"
                 )
