@@ -115,6 +115,7 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_remove(self):
         """Remove a config entry."""
+        _LOGGER.warning(f"remove config")
         config_path = self.hass.config.path("configuration.yaml")
         await self.hass.async_add_executor_job(self._remove_config, config_path)
 

@@ -13,6 +13,7 @@ from homeassistant.helpers import discovery
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from .const import DOMAIN, EVENT_NEW_DATA
+from .config_flow import AirtubUDPConfigFlow
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -229,15 +230,13 @@ async def async_setup_entry(hass, entry):
 async def async_unload_entry(hass, entry):
     """Unload Airtub UDP config entry."""
     tasks = []
-
-    # Unload climate platform
     tasks.append(hass.config_entries.async_forward_entry_unload(entry, "climate"))
-
-    # Unload sensor platform (if applicable)
-    # Replace "sensor" with your actual sensor platform name
     tasks.append(hass.config_entries.async_forward_entry_unload(entry, "sensor"))
 
-    # Wait for all unload tasks to complete
+    config_flow = AirtubUDPConfigFlow()
+    config_flow.hass = hass
+    await config_flow.async_remove()
+
     results = await asyncio.gather(*tasks)
     if all(results):
         hass.data[DOMAIN].pop(entry.entry_id)
