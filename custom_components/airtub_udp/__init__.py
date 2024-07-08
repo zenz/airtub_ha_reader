@@ -136,6 +136,9 @@ async def udp_listener(
 
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the UDP Multicast component."""
+    if DOMAIN not in config:
+        return True  # 如果 config 中不包含 DOMAIN，则直接返回 True
+
     conf = config[DOMAIN]
     multicast_group = conf["multicast_group"]
     multicast_port = conf["multicast_port"]
@@ -217,11 +220,26 @@ async def async_setup_entry(hass, entry):
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "climate")
     )
+    hass.async_create_task(
+        hass.config_entries.async_forward_entry_setup(entry, "sensor")
+    )
     return True
 
 
 async def async_unload_entry(hass, entry):
     """Unload Airtub UDP config entry."""
-    hass.data[DOMAIN].pop(entry.entry_id)
-    await hass.config_entries.async_forward_entry_unload(entry, "climate")
-    return True
+    tasks = []
+
+    # Unload climate platform
+    tasks.append(hass.config_entries.async_forward_entry_unload(entry, "climate"))
+
+    # Unload sensor platform (if applicable)
+    # Replace "sensor" with your actual sensor platform name
+    tasks.append(hass.config_entries.async_forward_entry_unload(entry, "sensor"))
+
+    # Wait for all unload tasks to complete
+    results = await asyncio.gather(*tasks)
+    if all(results):
+        hass.data[DOMAIN].pop(entry.entry_id)
+
+    return all(results)

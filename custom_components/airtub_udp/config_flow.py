@@ -6,6 +6,8 @@ from homeassistant.helpers import config_entry_flow, config_validation as cv
 from homeassistant.const import CONF_DEVICE, CONF_PASSWORD
 from .const import DOMAIN
 import os
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,34 +30,69 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             # Save the password to secrets.yaml
             secrets_path = self.hass.config.path("secrets.yaml")
-            secrets = {}
-            if os.path.exists(secrets_path):
-                with open(secrets_path, "r") as secrets_file:
-                    for line in secrets_file:
-                        key, value = line.strip().split(": ", 1)
-                        secrets[key] = value
-
+            secrets = await self.hass.async_add_executor_job(
+                self._read_secrets, secrets_path
+            )
             secrets["airtub_password"] = password
-
-            with open(secrets_path, "w") as secrets_file:
-                for key, value in secrets.items():
-                    secrets_file.write(f"{key}: {value}\n")
+            await self.hass.async_add_executor_job(
+                self._write_secrets, secrets_path, secrets
+            )
 
             # Update configuration.yaml
             config_path = self.hass.config.path("configuration.yaml")
-            with open(config_path, "a") as config_file:
-                config_file.write(f"\n{DOMAIN}:\n")
-                config_file.write(f'  multicast_group: "224.0.1.3"\n')
-                config_file.write(f"  multicast_port: 4211\n")
-                config_file.write(f"  device: {device}\n")
-                config_file.write(f"  secret: !secret airtub_password\n")
-                config_file.write(f"\nclimate:\n")
-                config_file.write(f"  - platform: {DOMAIN}\n")
-                config_file.write(f"    operate: auto\n")
+            await self.hass.async_add_executor_job(
+                self._update_config, config_path, device
+            )
 
             return self.async_create_entry(title="Airtub UDP", data=user_input)
 
         return self._show_config_form(user_input)
+
+    @staticmethod
+    def _read_secrets(secrets_path):
+        secrets = {}
+        if os.path.exists(secrets_path):
+            with open(secrets_path, "r") as secrets_file:
+                for line in secrets_file:
+                    key, value = line.strip().split(": ", 1)
+                    secrets[key] = value
+        return secrets
+
+    @staticmethod
+    def _write_secrets(secrets_path, secrets):
+        with open(secrets_path, "w") as secrets_file:
+            for key, value in secrets.items():
+                secrets_file.write(f"{key}: {value}\n")
+
+    @staticmethod
+    def _update_config(config_path, device):
+        if os.path.exists(config_path):
+            with open(config_path, "r") as config_file:
+                lines = config_file.readlines()
+
+            with open(config_path, "w") as config_file:
+                inside_airtub_config = False
+                for line in lines:
+                    if line.strip() == "# ----airtub-start----":
+                        inside_airtub_config = True
+                        continue
+                    elif line.strip() == "# ----airtub-stop----":
+                        inside_airtub_config = False
+                        continue
+                    if inside_airtub_config:
+                        continue
+                    config_file.write(line)
+
+                config_file.write("\n# ----airtub-start----\n")
+                config_file.write(f"\n{DOMAIN}:\n")
+                config_file.write('  multicast_group: "224.0.1.3"\n')
+                config_file.write("  multicast_port: 4211\n")
+                config_file.write(f"  device: {device}\n")
+                config_file.write("  secret: !secret airtub_password\n")
+                config_file.write("\nclimate:\n")
+                config_file.write(f"  - platform: {DOMAIN}\n")
+                config_file.write("    operate: auto\n")
+                config_file.write("\n# ----airtub-stop----\n")
 
     @callback
     def _show_config_form(self, user_input):
@@ -73,3 +110,29 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user", data_schema=data_schema, errors=self._errors
         )
+
+    async def async_remove(self):
+        """Remove a config entry."""
+        config_path = self.hass.config.path("configuration.yaml")
+        await self.hass.async_add_executor_job(self._remove_config, config_path)
+
+    @staticmethod
+    def _remove_config(config_path):
+        _LOGGER.warning(f"should try to delete airtub config from {config_path}")
+        if os.path.exists(config_path):
+            with open(config_path, "r") as file:
+                lines = file.readlines()
+
+            with open(config_path, "w") as file:
+                inside_airtub_config = False
+                for line in lines:
+                    if line.strip() == "# ----airtub-start----":
+                        inside_airtub_config = True
+                        continue
+                    elif line.strip() == "# ----airtub-stop----":
+                        inside_airtub_config = False
+                        continue
+                    if not inside_airtub_config:
+                        file.write(line)
+        else:
+            _LOGGER.warning(f"Configuration file {config_path} does not exist")

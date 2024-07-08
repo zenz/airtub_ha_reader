@@ -34,6 +34,11 @@ async def async_setup_platform(
     async_add_entities(entities, update_before_add=True)
 
 
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Set up the sensor platform from a config entry."""
+    pass
+
+
 class UDPMulticastSensor(SensorEntity):
     """Representation of a UDP Multicast sensor."""
 

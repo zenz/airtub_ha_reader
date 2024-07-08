@@ -1,0 +1,14 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Configure Airtub UDP",
+                "description": "Please enter the following fields to configure your device:",
+                "data": {
+                    "device": "Device Serial Number",
+                    "password": "Device Password"
+                }
+            }
+        }
+    }
+}

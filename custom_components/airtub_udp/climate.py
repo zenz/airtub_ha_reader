@@ -19,21 +19,15 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Set up the climate platform."""
-    op_mode = 1 if config.get("operate") == "auto" else 0
-    # _LOGGER.debug(f"Mode: {op_mode}")
+    """Set up the climate platform from configuration.yaml."""
+    operate = config.get("operate", "auto")
+    op_mode = 1 if operate == "auto" else 0
     device = hass.data[DOMAIN]["device"]
-    device1 = f"{device}_ch"
-    device2 = f"{device}_dhw"
+    device1 = f"boiler_{device}_ch"
+    device2 = f"boiler_{device}_dhw"
     entity1 = AirtubClimateDevice(hass, device1, op_mode)
     entity2 = AirtubClimateDevice(hass, device2, op_mode)
     async_add_entities([entity1, entity2], True)
-
-    async def async_setup_entry(hass, config_entry, async_add_entities):
-        """Set up the climate platform from a config entry."""
-        # 配置设备和实体
-        # 添加实体到Home Assistant
-        async_add_entities([entity1, entity2], True)
 
     async def handle_new_data_event(event):
         _LOGGER.debug("New data event received")
@@ -43,6 +37,11 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         entity2.async_schedule_update_ha_state(True)
 
     hass.bus.async_listen(EVENT_NEW_DATA, handle_new_data_event)
+
+
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Set up the climate platform from a config entry."""
+    pass
 
 
 class AirtubClimateDevice(ClimateEntity):
