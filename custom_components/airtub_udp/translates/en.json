@@ -6,7 +6,8 @@
                 "description": "Please enter the following fields to configure your device:",
                 "data": {
                     "device": "Device Serial Number",
-                    "password": "Device Password"
+                    "password": "Device Password",
+                    "mode": "auto or manual"
                 }
             }
         }

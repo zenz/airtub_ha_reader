@@ -3,7 +3,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import config_entry_flow, config_validation as cv
-from homeassistant.const import CONF_DEVICE, CONF_PASSWORD
+from homeassistant.const import CONF_DEVICE, CONF_PASSWORD, CONF_MODE
 from .const import DOMAIN
 import os
 import asyncio
@@ -27,6 +27,7 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             device = user_input[CONF_DEVICE]
             password = user_input[CONF_PASSWORD]
+            mode = user_input[CONF_MODE]
 
             # Save the password to secrets.yaml
             secrets_path = self.hass.config.path("secrets.yaml")
@@ -41,7 +42,7 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # Update configuration.yaml
             config_path = self.hass.config.path("configuration.yaml")
             await self.hass.async_add_executor_job(
-                self._update_config, config_path, device
+                self._update_config, config_path, device, mode
             )
 
             return self.async_create_entry(title="Airtub UDP", data=user_input)
@@ -65,7 +66,7 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 secrets_file.write(f"{key}: {value}\n")
 
     @staticmethod
-    def _update_config(config_path, device):
+    def _update_config(config_path, device, mode):
         if os.path.exists(config_path):
             with open(config_path, "r") as config_file:
                 lines = config_file.readlines()
@@ -91,7 +92,7 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 config_file.write("  secret: !secret airtub_password\n")
                 config_file.write("\nclimate:\n")
                 config_file.write(f"  - platform: {DOMAIN}\n")
-                config_file.write("    operate: auto\n")
+                config_file.write(f"    operate: {mode}\n")
                 config_file.write("\n# ----airtub-stop----\n")
 
     @callback
@@ -105,6 +106,7 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(
                     CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")
                 ): str,
+                vol.Optional(CONF_MODE, default=user_input.get(CONF_MODE, "auto")): str,
             }
         )
         return self.async_show_form(
