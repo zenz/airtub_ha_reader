@@ -12,11 +12,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import discovery
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
+from .const import DOMAIN, EVENT_NEW_DATA
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = "airtub_udp"
-EVENT_NEW_DATA = "airtub_new_data_received"
 MSG_TYPE = 4
 ATTR_JSON_DATA = "cmd"
 SERVICE_RECEIVE_JSON = "sender"
@@ -137,7 +136,6 @@ async def udp_listener(
 
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the UDP Multicast component."""
-
     conf = config[DOMAIN]
     multicast_group = conf["multicast_group"]
     multicast_port = conf["multicast_port"]
@@ -209,4 +207,21 @@ async def async_setup(hass: HomeAssistant, config: dict):
         _LOGGER.error(f"Error during setup: {e}")
         return False
 
+    return True
+
+
+async def async_setup_entry(hass, entry):
+    """Set up Airtub UDP from a config entry."""
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN][entry.entry_id] = entry.data
+    hass.async_create_task(
+        hass.config_entries.async_forward_entry_setup(entry, "climate")
+    )
+    return True
+
+
+async def async_unload_entry(hass, entry):
+    """Unload Airtub UDP config entry."""
+    hass.data[DOMAIN].pop(entry.entry_id)
+    await hass.config_entries.async_forward_entry_unload(entry, "climate")
     return True

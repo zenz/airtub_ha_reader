@@ -7,10 +7,9 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity
 from homeassistant.components.climate.const import HVACMode, ClimateEntityFeature
 from homeassistant.const import UnitOfTemperature, ATTR_TEMPERATURE
+from .const import DOMAIN, EVENT_NEW_DATA
 
 _LOGGER = logging.getLogger(__name__)
-DOMAIN = "airtub_udp"
-EVENT_NEW_DATA = "airtub_new_data_received"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -29,6 +28,12 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     entity1 = AirtubClimateDevice(hass, device1, op_mode)
     entity2 = AirtubClimateDevice(hass, device2, op_mode)
     async_add_entities([entity1, entity2], True)
+
+    async def async_setup_entry(hass, config_entry, async_add_entities):
+        """Set up the climate platform from a config entry."""
+        # 配置设备和实体
+        # 添加实体到Home Assistant
+        async_add_entities([entity1, entity2], True)
 
     async def handle_new_data_event(event):
         _LOGGER.debug("New data event received")

@@ -8,5 +8,6 @@
     "@zenz"
   ],
   "requirements": [],
+  "config_flow": true,
   "integration_type": "hub"
 }
