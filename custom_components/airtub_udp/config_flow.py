@@ -31,12 +31,12 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             # Save the password to secrets.yaml
             secrets_path = self.hass.config.path("secrets.yaml")
-            secrets = await self.hass.async_add_executor_job(
+            secrets, original_lines = await self.hass.async_add_executor_job(
                 self._read_secrets, secrets_path
             )
             secrets["airtub_password"] = password
             await self.hass.async_add_executor_job(
-                self._write_secrets, secrets_path, secrets
+                self._write_secrets, secrets_path, secrets, original_lines
             )
 
             # Update configuration.yaml
@@ -52,18 +52,36 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     def _read_secrets(secrets_path):
         secrets = {}
+        original_lines = []
         if os.path.exists(secrets_path):
             with open(secrets_path, "r") as secrets_file:
                 for line in secrets_file:
-                    key, value = line.strip().split(": ", 1)
-                    secrets[key] = value
-        return secrets
+                    original_lines.append(line)
+                    stripped_line = line.strip()
+                    if ": " in stripped_line:
+                        key, value = stripped_line.split(": ", 1)
+                        secrets[key] = value
+        return secrets, original_lines
 
     @staticmethod
-    def _write_secrets(secrets_path, secrets):
+    def _write_secrets(secrets_path, secrets, original_lines):
         with open(secrets_path, "w") as secrets_file:
+            keys_written = set()
+            for line in original_lines:
+                stripped_line = line.strip()
+                if ": " in stripped_line:
+                    key, _ = stripped_line.split(": ", 1)
+                    if key in secrets:
+                        secrets_file.write(f"{key}: {secrets[key]}\n")
+                        keys_written.add(key)
+                    else:
+                        secrets_file.write(line)
+                else:
+                    secrets_file.write(line)
+            # 写入新的键值对
             for key, value in secrets.items():
-                secrets_file.write(f"{key}: {value}\n")
+                if key not in keys_written:
+                    secrets_file.write(f"{key}: {value}\n")
 
     @staticmethod
     def _update_config(config_path, device, mode):
