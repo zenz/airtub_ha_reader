@@ -49,6 +49,7 @@ class AirtubClimateDevice(ClimateEntity):
 
     def __init__(self, hass, name, mode):
         """Initialize the climate device."""
+        self._enable_turn_on_off_backwards_compatibility = False
         self._name = name
         self._hass = hass
         self._mode = mode
