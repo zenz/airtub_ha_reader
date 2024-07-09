@@ -19,8 +19,13 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Set up the climate platform from configuration.yaml."""
-    operate = config.get("operate", "auto")
+    # """Set up the climate platform from configuration.yaml."""
+    pass
+
+
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Set up the climate platform from a config entry."""
+    operate = hass.data[DOMAIN].get("operate", "auto")
     op_mode = 1 if operate == "auto" else 0
     device = hass.data[DOMAIN]["device"]
     device1 = f"boiler_{device}_ch"
@@ -37,11 +42,6 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         entity2.async_schedule_update_ha_state(True)
 
     hass.bus.async_listen(EVENT_NEW_DATA, handle_new_data_event)
-
-
-async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up the climate platform from a config entry."""
-    pass
 
 
 class AirtubClimateDevice(ClimateEntity):

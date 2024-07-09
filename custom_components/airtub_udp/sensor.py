@@ -13,9 +13,11 @@ async def async_setup_platform(
     hass: HomeAssistant, config: dict, async_add_entities, discovery_info=None
 ):
     """Set up the UDP Multicast sensor platform."""
-    if discovery_info is None:
-        return
+    pass
 
+
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Set up the sensor platform from a config entry."""
     device = hass.data[DOMAIN]["device"]
     entities = []
     data = hass.data[DOMAIN].get("data", {})
@@ -32,11 +34,6 @@ async def async_setup_platform(
         entities.append(entity)
 
     async_add_entities(entities, update_before_add=True)
-
-
-async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up the sensor platform from a config entry."""
-    pass
 
 
 class UDPMulticastSensor(SensorEntity):
