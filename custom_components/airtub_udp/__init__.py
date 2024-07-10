@@ -218,12 +218,8 @@ async def async_setup_entry(hass, entry):
     """Set up Airtub UDP from a config entry."""
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(entry, "climate")
-    )
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(entry, "sensor")
-    )
+    await hass.config_entries.async_forward_entry_setup(entry, "climate")
+    await hass.config_entries.async_forward_entry_setup(entry, "sensor")
     return True
 
 
