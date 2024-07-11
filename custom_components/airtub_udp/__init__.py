@@ -100,7 +100,7 @@ async def udp_listener(
 
     loop = asyncio.get_running_loop()
 
-    _LOGGER.debug(f"Registered udp listener")
+    _LOGGER.debug(f"AIRTUB: Registered udp listener")
 
     while True:
         try:
@@ -118,7 +118,7 @@ async def udp_listener(
                         hass.data[DOMAIN]["ip"] = addr[0]
                     data_dict = json.loads(data_content)
                     if "rec" in data_dict:
-                        _LOGGER.debug(f"Command confirmed!")
+                        _LOGGER.debug(f"AIRTUB: Command confirmed!")
                         msg_received = True
                         del data_dict["rec"]
                         hass.states.async_set(f"{DOMAIN}.status", "ready")
@@ -146,12 +146,11 @@ async def async_setup(hass: HomeAssistant, config: dict):
     secret = conf["secret"]
     device = conf["device"]
 
-    # _LOGGER.warning(f"airtub_udp setup {device} with {multicast_group}:{multicast_port}")
     async def handle_json_service(call):
         global msg_received
         global sock
         json_data = call.data.get(ATTR_JSON_DATA)
-        remote_ip = hass.data[DOMAIN]["ip"]
+        remote_ip = hass.data[DOMAIN].get("ip")
         if remote_ip == None:
             return True
         try:
@@ -177,15 +176,17 @@ async def async_setup(hass: HomeAssistant, config: dict):
                         sock, encrypted_data, (remote_ip, multicast_port)
                     )
                 _LOGGER.debug(
-                    f"Sending JSON cmd to:{multicast_group} port:{multicast_port} with data:{parsed_data}"
+                    f"AIRTUB: Sending JSON cmd to:{multicast_group} port:{multicast_port} with data:{parsed_data}"
                 )
             except OSError as e:
-                _LOGGER.error(f"OS error occurred while sending data: {e}")
+                _LOGGER.error(f"AIRTUB: OS error occurred while sending data: {e}")
             except socket.gaierror as e:
-                _LOGGER.error(f"Socket address error occurred while sending data: {e}")
+                _LOGGER.error(
+                    f"AIRTUB: Socket address error occurred while sending data: {e}"
+                )
 
         except json.JSONDecodeError as e:
-            _LOGGER.error(f"Error decoding JSON: {e}")
+            _LOGGER.error(f"AIRTUB: Error decoding JSON: {e}")
             hass.states.async_set(f"{DOMAIN}.status", "error")
 
     try:
@@ -197,6 +198,10 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
         hass.async_create_task(
             discovery.async_load_platform(hass, "sensor", DOMAIN, {}, config)
+        )
+
+        hass.async_create_task(
+            discovery.async_load_platform(hass, "climate", DOMAIN, {}, config)
         )
 
         hass.states.async_set(f"{DOMAIN}.status", "ready")
@@ -218,16 +223,18 @@ async def async_setup_entry(hass, entry):
     """Set up Airtub UDP from a config entry."""
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
-    await hass.config_entries.async_forward_entry_setup(entry, "climate")
-    await hass.config_entries.async_forward_entry_setup(entry, "sensor")
+    await hass.config_entries.async_forward_entry_setups(entry, ["climate"])
+    await asyncio.sleep(3)
+    await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
     return True
 
 
 async def async_unload_entry(hass, entry):
     """Unload Airtub UDP config entry."""
-    tasks = []
-    tasks.append(hass.config_entries.async_forward_entry_unload(entry, "climate"))
-    tasks.append(hass.config_entries.async_forward_entry_unload(entry, "sensor"))
+    tasks = [
+        hass.config_entries.async_forward_entry_unload(entry, "climate"),
+        hass.config_entries.async_forward_entry_unload(entry, "sensor"),
+    ]
 
     config_flow = AirtubUDPConfigFlow()
     config_flow.hass = hass

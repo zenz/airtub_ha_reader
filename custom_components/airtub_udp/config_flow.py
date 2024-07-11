@@ -21,6 +21,8 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self):
         """Initialize the config flow."""
         self._errors = {}
+        self._nane = "Airtub UDP Config Flow"
+        self._unique_id = "airtub_udp_config_flow"
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
@@ -133,13 +135,13 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_remove(self):
         """Remove a config entry."""
-        _LOGGER.warning(f"remove config")
+        _LOGGER.debug(f"AIRTUB: remove config")
         config_path = self.hass.config.path("configuration.yaml")
         await self.hass.async_add_executor_job(self._remove_config, config_path)
 
     @staticmethod
     def _remove_config(config_path):
-        _LOGGER.warning(f"should try to delete airtub config from {config_path}")
+        _LOGGER.debug(f"AIRTUB: delete airtub config from {config_path}")
         if os.path.exists(config_path):
             with open(config_path, "r") as file:
                 lines = file.readlines()
@@ -156,4 +158,14 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     if not inside_airtub_config:
                         file.write(line)
         else:
-            _LOGGER.warning(f"Configuration file {config_path} does not exist")
+            _LOGGER.debug(f"AIRTUB: Configuration file {config_path} does not exist")
+
+    @property
+    def name(self):
+        """Return the name of the config flow."""
+        return self._name
+
+    @property
+    def unique_id(self):
+        """Return a unique ID."""
+        return self._unique_id

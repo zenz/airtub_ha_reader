@@ -18,15 +18,18 @@ async def async_setup_platform(
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the sensor platform from a config entry."""
-    device = hass.data[DOMAIN]["device"]
-    entities = []
+    _LOGGER.debug("AIRTUB: Setting up sensor platform.")
+    device = hass.data[DOMAIN].get("device")
+    if device is None:
+        _LOGGER.debug("AIRTUB: No device specified for sensor.")
+        return
+
     data = hass.data[DOMAIN].get("data", {})
 
-    _LOGGER.debug(f"Setting up platform with device: {device}, data: {data}")
-
+    entities = []
     for key, value in data.items():
         entity_id = f"boiler_{device}_{key}"
-        _LOGGER.debug(f"Creating entity for key: {key}, entity_id: {entity_id}")
+        _LOGGER.debug(f"AIRTUB: Creating entity for key: {key}, entity_id: {entity_id}")
         if key.endswith("m") or key.endswith("fst") or key.endswith("sch"):
             entity = UDPMulticastBinarySensor(hass, device, key, value, entity_id)
         else:
@@ -121,13 +124,13 @@ class UDPMulticastSensor(SensorEntity):
     @staticmethod
     def _convert_to_number(value):
         """Convert value to number if possible."""
-        _LOGGER.debug(f"Attempting to convert value: {value}")
+        _LOGGER.debug(f"AIRTUB: Attempting to convert value: {value}")
         if value == "":
             return 0
         try:
             return float(value)
         except ValueError:
-            _LOGGER.debug(f"Conversion failed for value: {value}, returning 0")
+            _LOGGER.debug(f"AIRTUB: Conversion failed for value: {value}, returning 0")
             return 0
 
     @callback
@@ -145,7 +148,7 @@ class UDPMulticastSensor(SensorEntity):
                 self._state = new_value_converted
                 self.async_write_ha_state()
         else:
-            _LOGGER.debug(f"Key '{self._key}' not found in data.")
+            _LOGGER.debug(f"AIRTUB: Key '{self._key}' not found in data.")
 
 
 class UDPMulticastBinarySensor(BinarySensorEntity):
@@ -196,7 +199,7 @@ class UDPMulticastBinarySensor(BinarySensorEntity):
     @staticmethod
     def _convert_to_boolean(value):
         """Convert value to boolean."""
-        _LOGGER.debug(f"Attempting to convert value to boolean: {value}")
+        _LOGGER.debug(f"AIRTUB: Attempting to convert value to boolean: {value}")
         return value == 1
 
     @callback
@@ -214,4 +217,4 @@ class UDPMulticastBinarySensor(BinarySensorEntity):
                 self._state = new_value_converted
                 self.async_write_ha_state()
         else:
-            _LOGGER.debug(f"Key '{self._key}' not found in data.")
+            _LOGGER.debug(f"AIRTUB: Key '{self._key}' not found in data.")
