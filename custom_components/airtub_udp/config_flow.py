@@ -26,6 +26,9 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
+        await self.async_set_unique_id(self._unique_id)
+        self._abort_if_unique_id_configured()
+
         if user_input is not None:
             device = user_input[CONF_DEVICE]
             password = user_input[CONF_PASSWORD]
@@ -93,6 +96,7 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             with open(config_path, "w") as config_file:
                 inside_airtub_config = False
+                previous_line_was_empty = False
                 for line in lines:
                     if line.strip() == "# ----airtub-start----":
                         inside_airtub_config = True
@@ -102,6 +106,14 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         continue
                     if inside_airtub_config:
                         continue
+
+                    if line.strip() == "":
+                        if previous_line_was_empty:
+                            continue
+                        previous_line_was_empty = True
+                    else:
+                        previous_line_was_empty = False
+
                     config_file.write(line)
 
                 config_file.write("\n# ----airtub-start----\n")

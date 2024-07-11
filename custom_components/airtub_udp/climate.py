@@ -37,10 +37,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     device2 = f"boiler_{device}_dhw"
     entity1 = AirtubClimateDevice(hass, device1, op_mode)
     entity2 = AirtubClimateDevice(hass, device2, op_mode)
-    async_add_entities([entity1, entity2], True)
+    async_add_entities([entity1, entity2], update_before_add=True)
 
     async def handle_new_data_event(event):
-        _LOGGER.debug("AIRTUB: New data event received")
+        _LOGGER.debug("AIRTUB: New data event received {event}")
         await entity1.async_update()
         await entity2.async_update()
         entity1.async_schedule_update_ha_state(True)
