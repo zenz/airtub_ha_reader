@@ -41,7 +41,7 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 RETRY_MAX = 5
-msg_recevied = False
+msg_received = False
 sock = None
 
 
