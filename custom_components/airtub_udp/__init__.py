@@ -187,7 +187,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
                 )
 
         except json.JSONDecodeError as e:
-            _LOGGER.error(f"AIRTUB: Error decoding JSON: {e}")
+            _LOGGER.warning(f"AIRTUB: Error decoding JSON: {e}")
             hass.states.async_set(f"{DOMAIN}.status", "error")
 
     try:
