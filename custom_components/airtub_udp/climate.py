@@ -246,8 +246,9 @@ class AirtubClimateDevice(ClimateEntity):
                 self._hvac_mode = HVACMode.HEAT if op_mode else HVACMode.OFF
                 self._temperature = data.get("crt", self._temperature)
                 self._target_temperature = data.get("trt", self._target_temperature)
-                mode = data.get("ccm", self._operation)
-                self._operation = "🔥加热中" if mode else "待机"
+                mode = data.get("ccm", 0)
+                fst = data.get("fst", 0)
+                self._operation = "🔥加热中" if (mode and fst) else "待机"
             else:
                 op_mode = data.get("tcm", self._mode)
                 self._man_hvac_mode = HVACMode.HEAT if op_mode else HVACMode.OFF
@@ -255,14 +256,16 @@ class AirtubClimateDevice(ClimateEntity):
                 self._man_target_temperature = data.get(
                     "tdt", self._man_target_temperature
                 )
-                mode = data.get("ccm", self._operation)
-                self._operation = "🔥加热中" if mode else "待机"
+                mode = data.get("ccm", 0)
+                fst = data.get("fst", 0)
+                self._operation = "🔥加热中" if (mode and fst) else "待机"
         else:
             mode = data.get("tdm", self._dhw_mode)
             self._dhw_mode = HVACMode.HEAT if mode else HVACMode.OFF
             self._dhw_temperature = data.get("cdt", self._dhw_temperature)
             self._dhw_target_temperature = data.get("tdt", self._dhw_target_temperature)
-            mode = data.get("cdm", self._dhw_operation)
-            self._dhw_operation = "🔥加热中" if mode else "待机"
+            mode = data.get("cdm", 0)
+            fst = data.get("fst", 0)
+            self._dhw_operation = "🔥加热中" if (mode and fst) else "待机"
 
         self.async_write_ha_state()
