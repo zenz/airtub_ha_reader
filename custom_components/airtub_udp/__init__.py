@@ -30,8 +30,6 @@ CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema(
             {
-                vol.Required("multicast_group"): cv.string,
-                vol.Required("multicast_port"): cv.port,
                 vol.Required("secret"): cv.string,
                 vol.Required("device"): cv.string,
             }
@@ -141,8 +139,8 @@ async def async_setup(hass: HomeAssistant, config: dict):
         return True  # 如果 config 中不包含 DOMAIN，则直接返回 True
 
     conf = config[DOMAIN]
-    multicast_group = conf["multicast_group"]
-    multicast_port = conf["multicast_port"]
+    multicast_group = "224.0.1.3"
+    multicast_port = 4211
     secret = conf["secret"]
     device = conf["device"]
 
@@ -171,7 +169,6 @@ async def async_setup(hass: HomeAssistant, config: dict):
                         MSG_TYPE, json.dumps(parsed_data, separators=(",", ":")), secret
                     )
                     await asyncio.sleep(1)  # 延时1秒
-                    # await loop.sock_sendto(sock, encrypted_data, (multicast_group, multicast_port))
                     await loop.sock_sendto(
                         sock, encrypted_data, (remote_ip, multicast_port)
                     )

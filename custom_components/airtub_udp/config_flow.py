@@ -118,8 +118,6 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                 config_file.write("\n# ----airtub-start----\n")
                 config_file.write(f"\n{DOMAIN}:\n")
-                config_file.write('  multicast_group: "224.0.1.3"\n')
-                config_file.write("  multicast_port: 4211\n")
                 config_file.write(f"  device: {device}\n")
                 config_file.write("  secret: !secret airtub_password\n")
                 config_file.write("\nclimate:\n")
