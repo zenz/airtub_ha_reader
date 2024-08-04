@@ -28,8 +28,6 @@
 在 configuration.yaml 中添加如下配置：
 ```yaml
 airtub_udp:
-    multicast_group: "224.0.1.3"
-    multicast_port: 4211
     device: "your_device_serial"
     secret: !secret airtub_password
 
