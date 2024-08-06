@@ -1,2 +1,6 @@
 sender:
-  cmd:
+  description: "Send command(s) to the Airtub Partner"
+  fields:
+    cmd:
+      description: "Command(s) to send"
+      example: "{ \"trt\": 21}"
