@@ -14,5 +14,17 @@
         "abort": {
             "already_configured": "设备已经配置过了"
         }
+    },
+    "services": {
+        "sender": {
+            "name": "发送命令到雅图伴侣",
+            "description": "发送命令到雅图伴侣",
+            "fields": {
+                "cmd": {
+                    "name": "命令",
+                    "description": "要发送到命令"
+                }
+            }
+        }
     }
 }

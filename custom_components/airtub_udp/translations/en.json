@@ -14,5 +14,17 @@
         "abort": {
             "already_configured": "Device is already configured"
         }
+    },
+    "services": {
+        "sender": {
+            "name": "Send Command to Airtub Partner",
+            "description": "Send command(s) to the Airtub Partner",
+            "fields": {
+                "cmd": {
+                    "name": "Command(s)",
+                    "description": "Command(s) to send"
+                }
+            }
+        }
     }
 }
