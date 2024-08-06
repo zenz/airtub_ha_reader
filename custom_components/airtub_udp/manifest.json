@@ -1,14 +1,14 @@
 {
   "domain": "airtub_udp",
   "name": "airtub_udp",
+  "version": "1.0",
+  "documentation": "https://github.com/zenz/airtub_ha_reader",
+  "requirements": [],
+  "dependencies": [],
   "codeowners": [
     "@zenz"
   ],
-  "config_flow": true,
-  "documentation": "https://github.com/zenz/airtub_ha_reader",
-  "dependencies": [],
-  "integration_type": "hub",
   "iot_class": "local_polling",
-  "requirements": [],
-  "version": "1.0"
+  "config_flow": true,
+  "integration_type": "hub"
 }
