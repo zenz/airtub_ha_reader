@@ -22,7 +22,7 @@
             "fields": {
                 "cmd": {
                     "name": "命令",
-                    "description": "要发送到命令"
+                    "description": "要发送的命令"
                 }
             }
         }
