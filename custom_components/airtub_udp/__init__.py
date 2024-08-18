@@ -10,8 +10,8 @@ import json
 from itertools import cycle
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import discovery
-import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
 from .const import DOMAIN, EVENT_NEW_DATA
 from .config_flow import AirtubUDPConfigFlow
 
@@ -175,7 +175,9 @@ async def async_setup(hass: HomeAssistant, config: dict):
                 _LOGGER.debug(
                     f"AIRTUB: Sending JSON cmd to:{multicast_group} port:{multicast_port} with data:{parsed_data}"
                 )
-                hass.states.async_set(f"{DOMAIN}.status", "ready") # 不管对方是否收到，都应当设置为ready
+                hass.states.async_set(
+                    f"{DOMAIN}.status", "ready"
+                )  # 不管对方是否收到，都应当设置为ready
             except OSError as e:
                 _LOGGER.error(f"AIRTUB: OS error occurred while sending data: {e}")
             except socket.gaierror as e:
@@ -186,6 +188,8 @@ async def async_setup(hass: HomeAssistant, config: dict):
         except json.JSONDecodeError as e:
             _LOGGER.warning(f"AIRTUB: Error decoding JSON: {e}")
             hass.states.async_set(f"{DOMAIN}.status", "error")
+
+    await asyncio.sleep(5)
 
     try:
         hass.data[DOMAIN] = {"device": device, "data": {}, "ip": None}
