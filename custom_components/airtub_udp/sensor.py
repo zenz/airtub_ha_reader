@@ -38,6 +38,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     async_add_entities(entities, update_before_add=True)
 
+    @callback
+    def handle_data_changed_event(event):
+        """Handle the custom event and notify all entities."""
+        _LOGGER.debug("AIRTUB: Notifying entities about data change event.")
+        for entity in entities:
+            entity.handle_event(event)
+
+    hass.bus.async_listen(EVENT_NEW_DATA, handle_data_changed_event)
+
 
 class UDPMulticastSensor(SensorEntity):
     """Representation of a UDP Multicast sensor."""
@@ -57,6 +66,10 @@ class UDPMulticastSensor(SensorEntity):
         self._name = f"boiler_{device}_{key}"
         self._state = self._convert_to_number(initial_value)
         self._entity_id = entity_id
+        self._setup_attributes(key)
+
+    def _setup_attributes(self, key):
+        """Setup sensor attributes based on key."""
         if key in ["cct", "cdt", "tct", "tdt", "odt", "tdf"]:
             self._attr_unit_of_measurement = UnitOfTemperature.CELSIUS
             self._attr_icon = "mdi:thermometer"
@@ -81,7 +94,6 @@ class UDPMulticastSensor(SensorEntity):
             self._attr_device_class = None
             self._attr_state_class = "measurement"
             self._attr_precision = 0  # 默认精度为0
-        hass.bus.async_listen(EVENT_NEW_DATA, self._handle_data_changed_event)
 
     @property
     def name(self):
@@ -133,9 +145,9 @@ class UDPMulticastSensor(SensorEntity):
             _LOGGER.debug(f"AIRTUB: Conversion failed for value: {value}, returning 0")
             return 0
 
-    @callback
-    def _handle_data_changed_event(self, event):
-        """Handle the custom event and update state"""
+    def handle_event(self, event):
+        """Handle the custom event and update state."""
+        _LOGGER.debug(f"AIRTUB: {self._name} received event data.")
         self.async_schedule_update_ha_state(True)
 
     async def async_update(self):
@@ -170,7 +182,6 @@ class UDPMulticastBinarySensor(BinarySensorEntity):
         self._state = self._convert_to_boolean(initial_value)
         self._entity_id = entity_id
         self._attr_icon = "mdi:toggle-switch-variant"
-        hass.bus.async_listen(EVENT_NEW_DATA, self._handle_data_changed_event)
 
     @property
     def name(self):
@@ -202,9 +213,9 @@ class UDPMulticastBinarySensor(BinarySensorEntity):
         _LOGGER.debug(f"AIRTUB: Attempting to convert value to boolean: {value}")
         return value == 1
 
-    @callback
-    def _handle_data_changed_event(self, event):
-        """Handle the custom event and update state"""
+    def handle_event(self, event):
+        """Handle the custom event and update state."""
+        _LOGGER.debug(f"AIRTUB: {self._name} received event data.")
         self.async_schedule_update_ha_state(True)
 
     async def async_update(self):
