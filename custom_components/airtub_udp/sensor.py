@@ -92,7 +92,7 @@ class UDPMulticastSensor(SensorEntity):
             self._attr_unit_of_measurement = "m³"
             self._attr_icon = "mdi:meter-gas"
             self._attr_device_class = SensorDeviceClass.GAS
-            self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+            self._attr_state_class = SensorStateClass.TOTAL
             self._attr_precision = 6  # 小数点后6位
         else:
             self._attr_unit_of_measurement = None

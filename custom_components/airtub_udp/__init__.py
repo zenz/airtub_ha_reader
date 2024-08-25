@@ -120,13 +120,13 @@ async def udp_listener(
                         msg_received = True
                         del data_dict["rec"]
                         hass.states.async_set(f"{DOMAIN}.status", "ready")
-                    # Ensure 'mod' and 'flt' keys are present
+                    # Ensure 'mod' and 'flt' and 'gas' keys are present
                     if "mod" not in data_dict:
                         data_dict["mod"] = 0
                     if "flt" not in data_dict:
                         data_dict["flt"] = 0
-                    if "gas" not in data_dict:
-                        data_dict["gas"] = 0
+                    # if "gas" not in data_dict:
+                    #     data_dict["gas"] = 0
                     hass.data[DOMAIN]["data"] = data_dict
                     hass.bus.async_fire(EVENT_NEW_DATA)
         except socket.error as e:
