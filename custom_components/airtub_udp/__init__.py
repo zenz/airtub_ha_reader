@@ -126,7 +126,7 @@ async def udp_listener(
                     if "flt" not in data_dict:
                         data_dict["flt"] = 0
                     if "gas" not in data_dict:
-                        data_dict["gas"] = -1
+                        data_dict["gas"] = 0
                     hass.data[DOMAIN]["data"] = data_dict
                     hass.bus.async_fire(EVENT_NEW_DATA)
         except socket.error as e:
