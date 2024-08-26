@@ -95,7 +95,7 @@ class UDPMulticastSensor(SensorEntity):
             self._attr_icon = "mdi:meter-gas"
             self._attr_device_class = SensorDeviceClass.GAS
             self._attr_state_class = SensorStateClass.TOTAL
-            self._attr_precision = 6  # 小数点后6位
+            self._attr_precision = 3  # 小数点后3位
         else:
             self._attr_unit_of_measurement = None
             self._attr_icon = "mdi:numeric"
@@ -122,6 +122,7 @@ class UDPMulticastSensor(SensorEntity):
         # 仅在 device_class 为 gas 并且值为 0 时触发 last_reset
         if self._attr_device_class == SensorDeviceClass.GAS and value < self._state:
             self._attr_last_reset = datetime.now()
+            _LOGGER.warning(f"Gas consumption was reset at {self._attr_last_reset}")
         self._state = value
 
     @property
