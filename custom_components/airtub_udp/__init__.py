@@ -1,4 +1,4 @@
-"""UDP Multicast integration."""
+"""Airfit Airtub Partner integration."""
 
 import asyncio
 import logging
@@ -10,6 +10,7 @@ import json
 from itertools import cycle
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import discovery
+from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from .const import DOMAIN, EVENT_NEW_DATA
@@ -120,19 +121,51 @@ async def udp_listener(
                         msg_received = True
                         del data_dict["rec"]
                         hass.states.async_set(f"{DOMAIN}.status", "ready")
-                    # Ensure 'mod' and 'flt' and 'gas' keys are present
+                    # Ensure 'mod' and 'flt' keys are present
                     if "mod" not in data_dict:
                         data_dict["mod"] = 0
                     if "flt" not in data_dict:
                         data_dict["flt"] = 0
-                    # if "gas" not in data_dict:
-                    #     data_dict["gas"] = 0
+                    if "pwr" not in data_dict:
+                        data_dict["pwr"] = 0
                     hass.data[DOMAIN]["data"] = data_dict
                     hass.bus.async_fire(EVENT_NEW_DATA)
         except socket.error as e:
             _LOGGER.error(f"Socket error: {e}")
             await asyncio.sleep(1)  # Wait a bit before retrying in case of error
         await asyncio.sleep(0)  # Yield control to the event loop
+
+
+class StatusEntity(Entity):
+    def __init__(self, hass, name, unique_id):
+        """Initialize the entity."""
+        self.hass = hass
+        self._name = name
+        self._unique_id = unique_id
+        self._state = "ready"
+
+    @property
+    def name(self):
+        """Return the name of the entity."""
+        return self._name
+
+    @property
+    def unique_id(self):
+        """Return the unique ID of the entity."""
+        return self._unique_id
+
+    @property
+    def state(self):
+        """Return the state of the entity."""
+        return self._state
+
+
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Set up the sensor platform from a config entry."""
+    name = f"{DOMAIN}.status"
+    unique_id = f"{config_entry.entry_id}_status"
+    status_entity = StatusEntity(hass, name, unique_id)
+    async_add_entities([status_entity], update_before_add=True)
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
@@ -191,7 +224,17 @@ async def async_setup(hass: HomeAssistant, config: dict):
             _LOGGER.warning(f"AIRTUB: Error decoding JSON: {e}")
             hass.states.async_set(f"{DOMAIN}.status", "error")
 
-    await asyncio.sleep(5)
+    async def handle_data_received_event(event):
+        """Handle the event when data is received."""
+        _LOGGER.debug("UDP data received, starting sensor and climate setup.")
+        hass.async_create_task(
+            discovery.async_load_platform(hass, "sensor", DOMAIN, {}, config)
+        )
+        hass.async_create_task(
+            discovery.async_load_platform(hass, "climate", DOMAIN, {}, config)
+        )
+        # Remove the listener after handling the event
+        hass.bus.async_remove_listener(EVENT_NEW_DATA, handle_data_received_event)
 
     try:
         hass.data[DOMAIN] = {"device": device, "data": {}, "ip": None}
@@ -200,13 +243,8 @@ async def async_setup(hass: HomeAssistant, config: dict):
             udp_listener(hass, multicast_group, multicast_port, secret, device)
         )
 
-        hass.async_create_task(
-            discovery.async_load_platform(hass, "sensor", DOMAIN, {}, config)
-        )
-
-        hass.async_create_task(
-            discovery.async_load_platform(hass, "climate", DOMAIN, {}, config)
-        )
+        # Register the event listener
+        hass.bus.async_listen(EVENT_NEW_DATA, handle_data_received_event)
 
         hass.states.async_set(f"{DOMAIN}.status", "ready")
         hass.services.async_register(
