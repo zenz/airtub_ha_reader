@@ -233,8 +233,6 @@ async def async_setup(hass: HomeAssistant, config: dict):
         hass.async_create_task(
             discovery.async_load_platform(hass, "climate", DOMAIN, {}, config)
         )
-        # Remove the listener after handling the event
-        hass.bus.async_remove_listener(EVENT_NEW_DATA, handle_data_received_event)
 
     try:
         hass.data[DOMAIN] = {"device": device, "data": {}, "ip": None}
@@ -244,7 +242,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
         )
 
         # Register the event listener
-        hass.bus.async_listen(EVENT_NEW_DATA, handle_data_received_event)
+        hass.bus.async_listen_once(EVENT_NEW_DATA, handle_data_received_event)
 
         hass.states.async_set(f"{DOMAIN}.status", "ready")
         hass.services.async_register(
