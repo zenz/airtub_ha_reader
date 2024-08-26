@@ -129,7 +129,8 @@ async def udp_listener(
                     if "pwr" not in data_dict:
                         data_dict["pwr"] = 0
                     hass.data[DOMAIN]["data"] = data_dict
-                    hass.bus.async_fire(EVENT_NEW_DATA)
+                    if "crt" in data_dict:
+                        hass.bus.async_fire(EVENT_NEW_DATA)
         except socket.error as e:
             _LOGGER.error(f"Socket error: {e}")
             await asyncio.sleep(1)  # Wait a bit before retrying in case of error
