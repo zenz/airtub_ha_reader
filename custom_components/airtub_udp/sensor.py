@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.binary_sensor import BinarySensorEntity
@@ -67,6 +68,7 @@ class UDPMulticastSensor(SensorEntity):
         self._state = self._convert_to_number(initial_value)
         self._entity_id = entity_id
         self._setup_attributes(key)
+        self._attr_last_reset = None
 
     def _setup_attributes(self, key):
         """Setup sensor attributes based on key."""
@@ -114,6 +116,20 @@ class UDPMulticastSensor(SensorEntity):
             if self._attr_precision is not None
             else self._state
         )
+
+    @state.setter
+    def state(self, value):
+        self._state = value
+
+        # 仅在 device_class 为 gas 并且值为 0 时触发 last_reset
+        if self.device_class == SensorDeviceClass.GAS and self._state == 0:
+            self._attr_last_reset = datetime.now()
+
+    @property
+    def last_reset(self):
+        if self.device_class == SensorDeviceClass.GAS:
+            return self._attr_last_reset
+        return None
 
     @property
     def unique_id(self):
