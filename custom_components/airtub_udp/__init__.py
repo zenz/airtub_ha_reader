@@ -191,7 +191,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
             _LOGGER.warning(f"AIRTUB: Error decoding JSON: {e}")
             hass.states.async_set(f"{DOMAIN}.status", "error")
 
-    await asyncio.sleep(5)
+    await asyncio.sleep(8)
 
     try:
         hass.data[DOMAIN] = {"device": device, "data": {}, "ip": None}
