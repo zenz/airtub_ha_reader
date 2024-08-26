@@ -137,36 +137,9 @@ async def udp_listener(
         await asyncio.sleep(0)  # Yield control to the event loop
 
 
-class StatusEntity(Entity):
-    def __init__(self, hass, name, unique_id):
-        """Initialize the entity."""
-        self.hass = hass
-        self._name = name
-        self._unique_id = unique_id
-        self._state = "ready"
-
-    @property
-    def name(self):
-        """Return the name of the entity."""
-        return self._name
-
-    @property
-    def unique_id(self):
-        """Return the unique ID of the entity."""
-        return self._unique_id
-
-    @property
-    def state(self):
-        """Return the state of the entity."""
-        return self._state
-
-
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the sensor platform from a config entry."""
-    name = f"{DOMAIN}.status"
-    unique_id = f"{config_entry.entry_id}_status"
-    status_entity = StatusEntity(hass, name, unique_id)
-    async_add_entities([status_entity], update_before_add=True)
+    pass
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
