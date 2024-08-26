@@ -119,11 +119,10 @@ class UDPMulticastSensor(SensorEntity):
 
     @state.setter
     def state(self, value):
-        self._state = value
-
         # 仅在 device_class 为 gas 并且值为 0 时触发 last_reset
-        if self._attr_device_class == SensorDeviceClass.GAS and self._state == 0:
+        if self._attr_device_class == SensorDeviceClass.GAS and value < self._state:
             self._attr_last_reset = datetime.now()
+        self._state = value
 
     @property
     def last_reset(self):
