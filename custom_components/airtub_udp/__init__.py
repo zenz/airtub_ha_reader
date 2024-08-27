@@ -129,7 +129,7 @@ async def udp_listener(
                     if "pwr" not in data_dict:
                         data_dict["pwr"] = 0
                     if "gas" in data_dict and data_dict["gas"] == 0:
-                        data_dict["gas"] = None
+                        data_dict["gas"] = 0.0001
                     hass.data[DOMAIN]["data"] = data_dict
                     if "crt" in data_dict:
                         hass.bus.async_fire(EVENT_NEW_DATA)
@@ -137,11 +137,6 @@ async def udp_listener(
             _LOGGER.error(f"Socket error: {e}")
             await asyncio.sleep(1)  # Wait a bit before retrying in case of error
         await asyncio.sleep(0)  # Yield control to the event loop
-
-
-async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up the sensor platform from a config entry."""
-    pass
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
