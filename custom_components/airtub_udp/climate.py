@@ -119,6 +119,11 @@ class AirtubClimateDevice(ClimateEntity):
         return self._dhw_mode
 
     @property
+    def target_temperature_step(self):
+        """Return the supported step of target temperature."""
+        return 1.0  # 设置步进为1.0
+
+    @property
     def target_temperature(self):
         """Return the temperature we try to reach."""
         if "_ch" in self._name:
