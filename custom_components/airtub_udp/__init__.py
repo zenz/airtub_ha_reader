@@ -129,7 +129,7 @@ async def udp_listener(
                     if "pwr" not in data_dict:
                         data_dict["pwr"] = 0
                     if "gas" in data_dict and data_dict["gas"] == 0:
-                        data_dict["gas"] = 0.0001
+                        data_dict["gas"] = 0.000001
                     hass.data[DOMAIN]["data"] = data_dict
                     if "crt" in data_dict:
                         hass.bus.async_fire(EVENT_NEW_DATA)
