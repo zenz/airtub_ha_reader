@@ -259,6 +259,7 @@ async def async_setup_entry(hass, entry):
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
     await hass.config_entries.async_forward_entry_setups(entry, ["climate"])
+    await asyncio.sleep(3)
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
     return True
 
