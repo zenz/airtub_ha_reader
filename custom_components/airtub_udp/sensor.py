@@ -95,6 +95,12 @@ class UDPMulticastSensor(SensorEntity):
             self._attr_device_class = SensorDeviceClass.GAS
             self._attr_state_class = SensorStateClass.TOTAL_INCREASING
             self._attr_precision = 6  # 小数点后6位
+        elif key in ["flt"]:
+            self._attr_unit_of_measurement =None
+            self._attr_icon = "mdi:alert-octagram"
+            self._attr_device_class = None
+            self._attr_state_class = None
+            self._attr_precision = None
         else:
             self._attr_unit_of_measurement = None
             self._attr_icon = "mdi:numeric"
@@ -110,11 +116,18 @@ class UDPMulticastSensor(SensorEntity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        return (
-            round(self._state, self._attr_precision)
-            if self._attr_precision is not None
-            else self._state
-        )
+        if self._key == "flt":
+            # 将状态值转换为整数
+            int_state = int(self._state)
+            # 将整数值转换为字符串并确保至少有2位数字
+            str_state = f"E{int_state:02}"
+            return str_state
+        else:
+            return (
+                round(self._state, self._attr_precision)
+                if self._attr_precision is not None
+                else self._state
+            )
 
     @property
     def unique_id(self):
