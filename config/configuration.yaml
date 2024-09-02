@@ -1,7 +1,0 @@
-airtub_udp:
-    device: "your_device_serial"
-    secret: !secret airtub_password
-
-climate:
-  - platform: airtub_udp
-    operate: auto

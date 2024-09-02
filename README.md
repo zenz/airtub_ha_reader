@@ -21,39 +21,11 @@
 
 ### 配置
 
-配置也有两种方式，一种是手动编辑配置，一种是通过配置服务来添加。
-
-#### 手动编辑配置
-
-在 configuration.yaml 中添加如下配置：
-```yaml
-airtub_udp:
-    device: "your_device_serial"
-    secret: !secret airtub_password
-
-climate:
-  - platform: airtub_udp
-    operate: auto
-```
-其中 device 为注册壁挂炉序列号，secret 为注册壁挂炉密钥。operate为操作模式，可选值为auto、manual，auto为自动室温模式，manual为手动水温模式。
-
-在 secrets.yaml 中添加如下配置：
-```yaml
-airtub_password: "your_device_password"
-```
-
-#### 配置服务添加
-
 从菜单栏选择【配置】【设备与服务】【添加集成】，找到airtub_udp，点击添加，按照提示填写设备号，密码等信息，确认即可。
-
-
-### 重启 
-
-无论是那种方式安装配置的，完成后都需要重启 Home Assistant。只有重启后，自定义集成组件才能使用。
 
 ### 使用
 
-重启 Home Assistant 后，可以在【配置】- 【设备与服务】-【实体】中找到 sensor.boiler_[device]_xxx 的实体，其中 device 为配置中的 device 值。
+添加后，可以在【配置】- 【设备与服务】-【实体】中找到 sensor.boiler_[device]_xxx 的实体，其中 device 为配置中的 device 值。
 
 _xxx 的各项解释如下：
 ```

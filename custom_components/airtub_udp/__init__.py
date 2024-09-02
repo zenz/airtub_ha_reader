@@ -11,10 +11,11 @@ from itertools import cycle
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import discovery
 from homeassistant.helpers.entity import Entity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_DEVICE, CONF_PASSWORD, CONF_MODE
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from .const import DOMAIN, EVENT_NEW_DATA
-from .config_flow import AirtubUDPConfigFlow
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,18 +26,6 @@ SERVICE_RECEIVE_JSON_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_JSON_DATA): cv.string,
     }
-)
-
-CONFIG_SCHEMA = vol.Schema(
-    {
-        DOMAIN: vol.Schema(
-            {
-                vol.Required("secret"): cv.string,
-                vol.Required("device"): cv.string,
-            }
-        )
-    },
-    extra=vol.ALLOW_EXTRA,
 )
 
 RETRY_MAX = 5
@@ -99,7 +88,7 @@ async def udp_listener(
 
     loop = asyncio.get_running_loop()
 
-    _LOGGER.debug(f"AIRTUB: Registered udp listener")
+    _LOGGER.warning(f"AIRTUB: Registered udp listener")
 
     # 初始默认数据
     default_data = {
@@ -163,23 +152,21 @@ async def udp_listener(
         await asyncio.sleep(0)  # Yield control to the event loop
 
 
-async def async_setup(hass: HomeAssistant, config: dict):
-    """Set up the UDP Multicast component."""
-    if DOMAIN not in config:
-        return True  # 如果 config 中不包含 DOMAIN，则直接返回 True
-
-    conf = config[DOMAIN]
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up Airtub UDP from a config entry."""
     multicast_group = "224.0.1.3"
     multicast_port = 4211
-    secret = conf["secret"]
-    device = conf["device"]
+    device = entry.data.get(CONF_DEVICE)
+    secret = entry.data.get(CONF_PASSWORD)
+    _LOGGER.warning(f"Device: {device}, Secret: {secret}")
+    
 
     async def handle_json_service(call):
         global msg_received
         global sock
         json_data = call.data.get(ATTR_JSON_DATA)
         remote_ip = hass.data[DOMAIN].get("ip")
-        if remote_ip == None:
+        if remote_ip is None:
             return True
         try:
             parsed_data = json.loads(json_data)
@@ -221,31 +208,34 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
     async def handle_data_received_event(event):
         """Handle the event when data is received."""
-        _LOGGER.debug("UDP data received, starting sensor and climate setup.")
-        hass.async_create_task(
-            discovery.async_load_platform(hass, "sensor", DOMAIN, {}, config)
-        )
-        hass.async_create_task(
-            discovery.async_load_platform(hass, "climate", DOMAIN, {}, config)
-        )
+        _LOGGER.warning("UDP data received, starting sensor and climate setup.")
+        try:
+            await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
+            await hass.config_entries.async_forward_entry_setups(entry, ["climate"])
+        except Exception as e:
+            _LOGGER.error(f"Error setting up platforms: {e}")
+        hass.states.async_set(f"{DOMAIN}.status", "ready")
 
     try:
+        hass.data.setdefault(DOMAIN, {})
         hass.data[DOMAIN] = {"device": device, "data": {}, "ip": None}
 
         hass.loop.create_task(
             udp_listener(hass, multicast_group, multicast_port, secret, device)
         )
-
-        # Register the event listener
-        hass.bus.async_listen_once(EVENT_NEW_DATA, handle_data_received_event)
-
-        hass.states.async_set(f"{DOMAIN}.status", "ready")
+        
         hass.services.async_register(
             DOMAIN,
             SERVICE_RECEIVE_JSON,
             handle_json_service,
             schema=SERVICE_RECEIVE_JSON_SCHEMA,
         )
+        
+
+        # Register the event listener
+        hass.bus.async_listen_once(EVENT_NEW_DATA, handle_data_received_event)
+
+        
 
     except Exception as e:
         _LOGGER.error(f"Error during setup: {e}")
@@ -254,28 +244,26 @@ async def async_setup(hass: HomeAssistant, config: dict):
     return True
 
 
-async def async_setup_entry(hass, entry):
-    """Set up Airtub UDP from a config entry."""
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = entry.data
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
-    await hass.config_entries.async_forward_entry_setups(entry, ["climate"])
-    return True
-
-
 async def async_unload_entry(hass, entry):
     """Unload Airtub UDP config entry."""
-    tasks = [
-        hass.config_entries.async_forward_entry_unload(entry, "climate"),
-        hass.config_entries.async_forward_entry_unload(entry, "sensor"),
-    ]
+    
+    hass.services.async_remove(DOMAIN, SERVICE_RECEIVE_JSON)
+    
+    entity_id = f"{DOMAIN}.status"
+    if hass.states.get(entity_id):
+        hass.states.async_remove(entity_id)
+        _LOGGER.warning(f"Removed entity: {entity_id}")
+    else:
+        _LOGGER.warning(f"No entity found with ID: {entity_id}")
+        
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, ["climate", "sensor"])
 
-    config_flow = AirtubUDPConfigFlow()
-    config_flow.hass = hass
-    await config_flow.async_remove()
-
-    results = await asyncio.gather(*tasks)
-    if all(results):
+    # If all platforms were successfully unloaded, remove the entry data.
+    if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
 
-    return all(results)
+        # Check if the domain is now empty, and if so, remove it.
+        if not hass.data[DOMAIN]:
+            hass.data.pop(DOMAIN)
+
+    return unload_ok
