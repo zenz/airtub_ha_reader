@@ -45,7 +45,6 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_remove(self):
         """Remove a config entry."""
-        _LOGGER.debug("AIRTUB: remove config")
         entry = await self.async_get_entry()
 
         if entry:

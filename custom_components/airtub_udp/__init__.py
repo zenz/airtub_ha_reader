@@ -88,8 +88,6 @@ async def udp_listener(
 
     loop = asyncio.get_running_loop()
 
-    _LOGGER.debug(f"AIRTUB: Registered udp listener")
-
     # 初始默认数据
     default_data = {
         "tcm": 0,
@@ -132,7 +130,6 @@ async def udp_listener(
                         hass.data[DOMAIN]["ip"] = addr[0]
                     data_dict = json.loads(data_content)
                     if "rec" in data_dict:
-                        _LOGGER.debug(f"AIRTUB: Command confirmed!")
                         msg_received = True
                         del data_dict["rec"]
                         hass.states.async_set(f"{DOMAIN}.status", "ready")
@@ -158,7 +155,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     multicast_port = 4211
     device = entry.data.get(CONF_DEVICE)
     secret = entry.data.get(CONF_PASSWORD)
-    _LOGGER.debug(f"Device: {device}, Secret: {secret}")
     
 
     async def handle_json_service(call):
@@ -189,9 +185,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     await loop.sock_sendto(
                         sock, encrypted_data, (remote_ip, multicast_port)
                     )
-                _LOGGER.debug(
-                    f"AIRTUB: Sending JSON cmd to:{multicast_group} port:{multicast_port} with data:{parsed_data}"
-                )
                 hass.states.async_set(
                     f"{DOMAIN}.status", "ready"
                 )  # 不管对方是否收到，都应当设置为ready
@@ -203,12 +196,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 )
 
         except json.JSONDecodeError as e:
-            _LOGGER.debug(f"AIRTUB: Error decoding JSON: {e}")
+            _LOGGER.warning(f"AIRTUB: Error decoding JSON: {e}")
             hass.states.async_set(f"{DOMAIN}.status", "error")
 
     async def handle_data_received_event(event):
         """Handle the event when data is received."""
-        _LOGGER.debug("UDP data received, starting sensor and climate setup.")
         try:
             await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
             await hass.config_entries.async_forward_entry_setups(entry, ["climate"])
@@ -235,8 +227,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Register the event listener
         hass.bus.async_listen_once(EVENT_NEW_DATA, handle_data_received_event)
 
-        
-
     except Exception as e:
         _LOGGER.error(f"Error during setup: {e}")
         return False
@@ -252,9 +242,6 @@ async def async_unload_entry(hass, entry):
     entity_id = f"{DOMAIN}.status"
     if hass.states.get(entity_id):
         hass.states.async_remove(entity_id)
-        _LOGGER.debug(f"Removed entity: {entity_id}")
-    else:
-        _LOGGER.debug(f"No entity found with ID: {entity_id}")
         
     unload_ok = await hass.config_entries.async_unload_platforms(entry, ["climate", "sensor"])
 
