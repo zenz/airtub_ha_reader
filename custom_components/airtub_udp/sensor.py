@@ -19,10 +19,10 @@ async def async_setup_platform(
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the sensor platform from a config entry."""
-    _LOGGER.warning("AIRTUB: Setting up sensor entry.")
+    _LOGGER.debug("AIRTUB: Setting up sensor entry.")
     device = hass.data[DOMAIN].get("device")
     if device is None:
-        _LOGGER.warning("AIRTUB: No device specified for sensor.")
+        _LOGGER.debug("AIRTUB: No device specified for sensor.")
         return
 
     data = hass.data[DOMAIN].get("data", {})
@@ -119,6 +119,8 @@ class UDPMulticastSensor(SensorEntity):
         if self._key == "flt":
             # 将状态值转换为整数
             int_state = int(self._state)
+            if int_state == 0:
+                return "OK"
             # 将整数值转换为字符串并确保至少有2位数字
             str_state = f"E{int_state:02}"
             return str_state
