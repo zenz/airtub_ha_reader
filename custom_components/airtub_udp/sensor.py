@@ -19,10 +19,10 @@ async def async_setup_platform(
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the sensor platform from a config entry."""
-    _LOGGER.debug("AIRTUB: Setting up sensor entry.")
+    _LOGGER.warning("AIRTUB: Setting up sensor entry.")
     device = hass.data[DOMAIN].get("device")
     if device is None:
-        _LOGGER.debug("AIRTUB: No device specified for sensor.")
+        _LOGGER.warning("AIRTUB: No device specified for sensor.")
         return
 
     data = hass.data[DOMAIN].get("data", {})

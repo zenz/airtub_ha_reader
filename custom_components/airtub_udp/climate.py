@@ -27,7 +27,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the climate platform from a config entry."""
     device = hass.data[DOMAIN].get("device")
     if device is None:
-        _LOGGER.debug("AIRTUB: No device specified climate.")
+        _LOGGER.warning("AIRTUB: No device specified climate.")
         return
 
     operate = hass.data[DOMAIN].get("operate", "auto")
