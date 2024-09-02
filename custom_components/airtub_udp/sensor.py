@@ -19,18 +19,15 @@ async def async_setup_platform(
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the sensor platform from a config entry."""
-    _LOGGER.debug("AIRTUB: Setting up sensor entry.")
     device = hass.data[DOMAIN].get("device")
     if device is None:
-        _LOGGER.debug("AIRTUB: No device specified for sensor.")
-        return
+       return
 
     data = hass.data[DOMAIN].get("data", {})
 
     entities = []
     for key, value in data.items():
         entity_id = f"boiler_{device}_{key}"
-        _LOGGER.debug(f"AIRTUB: Creating entity for key: {key}, entity_id: {entity_id}")
         if key.endswith("m") or key.endswith("fst") or key.endswith("ovr"):
             entity = UDPMulticastBinarySensor(hass, device, key, value, entity_id)
         else:
@@ -42,7 +39,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     @callback
     def handle_data_changed_event(event):
         """Handle the custom event and notify all entities."""
-        _LOGGER.debug("AIRTUB: Notifying entities about data change event.")
         for entity in entities:
             entity.handle_event(event)
 
@@ -158,18 +154,15 @@ class UDPMulticastSensor(SensorEntity):
     @staticmethod
     def _convert_to_number(value):
         """Convert value to number if possible."""
-        _LOGGER.debug(f"AIRTUB: Attempting to convert value: {value}")
         if value == "":
             return 0
         try:
             return float(value)
         except ValueError:
-            _LOGGER.debug(f"AIRTUB: Conversion failed for value: {value}, returning 0")
             return 0
 
     def handle_event(self, event):
         """Handle the custom event and update state."""
-        _LOGGER.debug(f"AIRTUB: {self._name} received event data.")
         self.async_schedule_update_ha_state(True)
 
     async def async_update(self):
@@ -181,9 +174,7 @@ class UDPMulticastSensor(SensorEntity):
             if new_value_converted != self._state:
                 self._state = new_value_converted
                 self.async_write_ha_state()
-        else:
-            _LOGGER.debug(f"AIRTUB: Key '{self._key}' not found in data.")
-
+        
 
 class UDPMulticastBinarySensor(BinarySensorEntity):
     """Representation of a UDP Multicast binary sensor."""
@@ -232,12 +223,10 @@ class UDPMulticastBinarySensor(BinarySensorEntity):
     @staticmethod
     def _convert_to_boolean(value):
         """Convert value to boolean."""
-        _LOGGER.debug(f"AIRTUB: Attempting to convert value to boolean: {value}")
         return value == 1
 
     def handle_event(self, event):
         """Handle the custom event and update state."""
-        _LOGGER.debug(f"AIRTUB: {self._name} received event data.")
         self.async_schedule_update_ha_state(True)
 
     async def async_update(self):
@@ -249,5 +238,4 @@ class UDPMulticastBinarySensor(BinarySensorEntity):
             if new_value_converted != self._state:
                 self._state = new_value_converted
                 self.async_write_ha_state()
-        else:
-            _LOGGER.debug(f"AIRTUB: Key '{self._key}' not found in data.")
+    

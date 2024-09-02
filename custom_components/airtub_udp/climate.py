@@ -27,7 +27,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the climate platform from a config entry."""
     device = hass.data[DOMAIN].get("device")
     if device is None:
-        _LOGGER.debug("AIRTUB: No device specified climate.")
         return
 
     operate = hass.data[DOMAIN].get("operate", "auto")
@@ -40,7 +39,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities([entity1, entity2])
 
     async def handle_new_data_event(event):
-        _LOGGER.debug(f"AIRTUB: New data event received {event}")
         await asyncio.gather(
             entity1.async_update(),
             entity2.async_update()
@@ -129,7 +127,6 @@ class AirtubClimateDevice(ClimateEntity):
     def target_temperature(self):
         """Return the temperature we try to reach."""
         if "_ch" in self._name:
-            # _LOGGER.debug(f"AIRTUB: Mode in target_temperature {self._mode}")
             if self._mode:
                 return self._target_temperature
             return self._man_target_temperature
@@ -171,7 +168,6 @@ class AirtubClimateDevice(ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new target hvac mode."""
-        # _LOGGER.debug(f"AIRTUB: Try to change mode")
         mode = "1" if hvac_mode == HVACMode.HEAT else "0"
         command = None
         if "_ch" in self._name:
@@ -232,16 +228,13 @@ class AirtubClimateDevice(ClimateEntity):
     async def async_update(self):
         """Fetch new state data for the climate entity."""
         if self._disable_update:
-            _LOGGER.debug("AIRTUB: Update disabled, skipping...")
             return
         
         if not self.hass:
-            _LOGGER.debug("AIRTUB: Entity is not yet added to hass, skipping update")
             return
 
         data = self._hass.data.get(DOMAIN, {}).get("data", {})
         if not data:
-            _LOGGER.debug("AIRTUB: No data available in hass.data")
             return
 
         current_heating_mode = data.get("atm", self._mode)
