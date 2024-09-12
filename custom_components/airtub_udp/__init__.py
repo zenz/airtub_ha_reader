@@ -87,31 +87,6 @@ async def udp_listener(
     sock.setblocking(False)
 
     loop = asyncio.get_running_loop()
-
-    # 初始默认数据
-    default_data = {
-        "tcm": 0,
-        "tct": 0,
-        "ccm": 0,
-        "cct": 0,
-        "tdm": 0,
-        "tdt": 0,
-        "cdm": 0,
-        "cdt": 0,
-        "atm": 0,
-        "trt": 0,
-        "crt": 0,
-        "pwr": 0,
-        "odt": 0,
-        "coe": 0,
-        "fst": 0,
-        "mod": 0,
-        "flt": 0,
-        "gas": 0.000001,  # 避免将gas设置为0
-    }
-
-    # 在未接收到数据前，填充默认值
-    hass.data[DOMAIN]["data"] = default_data
     hass.states.async_set(f"{DOMAIN}.status", "waiting for data")
 
     while True:
@@ -155,7 +130,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     multicast_port = 4211
     device = entry.data.get(CONF_DEVICE)
     secret = entry.data.get(CONF_PASSWORD)
-    
 
     async def handle_json_service(call):
         global msg_received
@@ -210,7 +184,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     try:
         hass.data.setdefault(DOMAIN, {})
-        hass.data[DOMAIN] = {"device": device, "data": {}, "ip": None}
+        hass.data[DOMAIN]["device"] = device
+        hass.data[DOMAIN]["ip"] = None
+        hass.data[DOMAIN]["data"] = {  # Set default values initially
+            "tcm": 0, "tct": 0, "ccm": 0, "cct": 0, "tdm": 0, "tdt": 0, "cdm": 0, "cdt": 0, "atm": 0, "trt": 0, "crt": 0,
+            "pwr": 0, "odt": 0, "coe": 0, "fst": 0, "mod": 0, "flt": 0, "gas": 0.000001
+        }
 
         hass.loop.create_task(
             udp_listener(hass, multicast_group, multicast_port, secret, device)
