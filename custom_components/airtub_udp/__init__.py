@@ -171,8 +171,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def handle_data_received_event(event):
         """Handle the event when data is received."""
         try:
-            await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
-            await hass.config_entries.async_forward_entry_setups(entry, ["climate"])
+            await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "climate"])
         except Exception as e:
             _LOGGER.error(f"Error setting up platforms: {e}")
         hass.states.async_set(f"{DOMAIN}.status", "ready")
@@ -211,11 +210,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass, entry):
     """Unload Airtub UDP config entry."""
     
-    hass.services.async_remove(DOMAIN, SERVICE_RECEIVE_JSON)
+    await hass.services.async_remove(DOMAIN, SERVICE_RECEIVE_JSON)
     
     entity_id = f"{DOMAIN}.status"
     if hass.states.get(entity_id):
-        hass.states.async_remove(entity_id)
+        await hass.states.async_remove(entity_id)
         
     unload_ok = await hass.config_entries.async_unload_platforms(entry, ["climate", "sensor"])
 
