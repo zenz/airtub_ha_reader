@@ -9,10 +9,8 @@ import zlib
 import json
 from itertools import cycle
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import discovery
-from homeassistant.helpers.entity import Entity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_DEVICE, CONF_PASSWORD, CONF_MODE
+from homeassistant.const import CONF_DEVICE, CONF_PASSWORD
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from .const import DOMAIN, EVENT_NEW_DATA
@@ -33,13 +31,14 @@ msg_received = False
 sock = None
 
 
+
 def xor_crypt(a: str, b: str):
-    """XOR decode."""
+    """XOR encode/decode."""
     return "".join(chr(ord(x) ^ ord(y)) for x, y in zip(a, cycle(b)))
 
 
 def pack_data(msgtype: int, message: str, secret: str):
-    """Data encode."""
+    """Encode data to send over UDP."""
     len_num = len(message)
     crypt_data = xor_crypt(message, secret).encode("ascii")
     crc = zlib.crc32(crypt_data).to_bytes(4, "little")
@@ -48,23 +47,20 @@ def pack_data(msgtype: int, message: str, secret: str):
     send_data.extend(bytearray([msgtype, len_num, 0, 0]))
     send_data.extend(crc)
     send_data.extend(crypt_data)
-
-    empty_len = 180 - len_num
-    empty_array = bytearray(empty_len)
-    send_data.extend(empty_array)
+    send_data.extend(bytearray(180 - len_num))
 
     return bytes(send_data)
 
 
 def unpack_data(pack_data: bytes, secret: str):
-    """Data decode."""
+    """Decode data received from UDP."""
     if len(pack_data) != 0:
         msgtype = pack_data[0]
         datalen = pack_data[1]
         crc1 = binascii.hexlify(pack_data[4:8][::-1]).decode()
         crc2 = hex(zlib.crc32(pack_data[8 : datalen + 8]))[2:]
         realdata = bytearray(pack_data[8 : datalen + 8])
-        realdata = bytes(xor_crypt(realdata.decode("ascii"), secret), "ascii")
+        realdata = xor_crypt(realdata.decode("ascii"), secret).encode("ascii")
         return msgtype, datalen, realdata, crc1, crc2
     return 0, 0, b"", "", ""
 
@@ -112,8 +108,7 @@ async def udp_listener(
                     data_dict.setdefault("mod", 0)
                     data_dict.setdefault("flt", 0)
                     data_dict.setdefault("pwr", 0)
-                    if "gas" in data_dict and data_dict["gas"] == 0:
-                        data_dict["gas"] = 0.000001
+                    data_dict["gas"] = max(data_dict.get("gas", 0.000001), 0.000001)
 
                     hass.data[DOMAIN]["data"] = data_dict
                     if "crt" in data_dict:
