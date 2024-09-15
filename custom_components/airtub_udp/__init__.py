@@ -31,7 +31,6 @@ msg_received = False
 sock = None
 
 
-
 def xor_crypt(a: str, b: str):
     """XOR encode/decode."""
     return "".join(chr(ord(x) ^ ord(y)) for x, y in zip(a, cycle(b)))
@@ -108,7 +107,8 @@ async def udp_listener(
                     data_dict.setdefault("mod", 0)
                     data_dict.setdefault("flt", 0)
                     data_dict.setdefault("pwr", 0)
-                    data_dict["gas"] = max(data_dict.get("gas", 0.000001), 0.000001)
+                    if "gas" in data_dict and data_dict["gas"] == 0:
+                        data_dict["gas"] = 0.000001
 
                     hass.data[DOMAIN]["data"] = data_dict
                     if "crt" in data_dict:
@@ -171,7 +171,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def handle_data_received_event(event):
         """Handle the event when data is received."""
         try:
-            await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "climate"])
+            await hass.config_entries.async_forward_entry_setups(
+                entry, ["sensor", "climate"]
+            )
         except Exception as e:
             _LOGGER.error(f"Error setting up platforms: {e}")
         hass.states.async_set(f"{DOMAIN}.status", "ready")
@@ -181,21 +183,36 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN]["device"] = device
         hass.data[DOMAIN]["ip"] = None
         hass.data[DOMAIN]["data"] = {  # Set default values initially
-            "tcm": 0, "tct": 0, "ccm": 0, "cct": 0, "tdm": 0, "tdt": 0, "cdm": 0, "cdt": 0, "atm": 0, "trt": 0, "crt": 0,
-            "pwr": 0, "odt": 0, "coe": 0, "fst": 0, "mod": 0, "flt": 0, "gas": 0.000001
+            "tcm": 0,
+            "tct": 0,
+            "ccm": 0,
+            "cct": 0,
+            "tdm": 0,
+            "tdt": 0,
+            "cdm": 0,
+            "cdt": 0,
+            "atm": 0,
+            "trt": 0,
+            "crt": 0,
+            "pwr": 0,
+            "odt": 0,
+            "coe": 0,
+            "fst": 0,
+            "mod": 0,
+            "flt": 0,
+            "gas": 0.000001,
         }
 
         hass.loop.create_task(
             udp_listener(hass, multicast_group, multicast_port, secret, device)
         )
-        
+
         hass.services.async_register(
             DOMAIN,
             SERVICE_RECEIVE_JSON,
             handle_json_service,
             schema=SERVICE_RECEIVE_JSON_SCHEMA,
         )
-        
 
         # Register the event listener
         hass.bus.async_listen_once(EVENT_NEW_DATA, handle_data_received_event)
@@ -209,14 +226,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass, entry):
     """Unload Airtub UDP config entry."""
-    
+
     await hass.services.async_remove(DOMAIN, SERVICE_RECEIVE_JSON)
-    
+
     entity_id = f"{DOMAIN}.status"
     if hass.states.get(entity_id):
         await hass.states.async_remove(entity_id)
-        
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, ["climate", "sensor"])
+
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        entry, ["climate", "sensor"]
+    )
 
     # If all platforms were successfully unloaded, remove the entry data.
     if unload_ok:
