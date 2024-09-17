@@ -13,7 +13,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_DEVICE, CONF_PASSWORD
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from .const import DOMAIN, EVENT_NEW_DATA
+from .const import DOMAIN, EVENT_NEW_DATA, UDP_GROUP, UDP_PORT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -121,8 +121,8 @@ async def udp_listener(
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Airtub UDP from a config entry."""
-    multicast_group = "224.0.1.3"
-    multicast_port = 4211
+    multicast_group = UDP_GROUP
+    multicast_port = UDP_PORT
     device = entry.data.get(CONF_DEVICE)
     secret = entry.data.get(CONF_PASSWORD)
 
