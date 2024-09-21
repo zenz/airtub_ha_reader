@@ -1,11 +1,9 @@
 """Platform for climate integration."""
 
-# pylint: disable=broad-except, global-statement, too-many-locals, too-many-statements, unused-argument, unused-variable, import-error
+# pylint: disable=broad-except, global-statement, too-many-locals, too-many-statements, unused-argument, unused-variable, import-error, abstract-method
 
 import logging
 import asyncio
-import voluptuous as vol
-import homeassistant.helpers.config_validation as cv
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import HVACMode, ClimateEntityFeature
 from homeassistant.const import UnitOfTemperature, ATTR_TEMPERATURE

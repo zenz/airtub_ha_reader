@@ -1,6 +1,6 @@
 """Platform for sensor integration."""
 
-# pylint: disable=broad-except, global-statement, too-many-locals, too-many-statements, unused-argument, unused-variable, import-error
+# pylint: disable=broad-except, global-statement, too-many-locals, too-many-statements, too-many-instance-attributes, too-many-arguments, unused-argument, unused-variable, import-error, overridden-final-method
 
 import logging
 from homeassistant.core import HomeAssistant, callback
