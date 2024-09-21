@@ -27,8 +27,8 @@ SERVICE_RECEIVE_JSON_SCHEMA = vol.Schema(
 )
 
 RETRY_MAX = 5
-msg_received = False
-sock = None
+MSG_RECEIVED = False
+SOCK = None
 
 
 def xor_crypt(a: str, b: str):
@@ -51,14 +51,14 @@ def pack_data(msgtype: int, message: str, secret: str):
     return bytes(send_data)
 
 
-def unpack_data(pack_data: bytes, secret: str):
+def unpack_data(data: bytes, secret: str):
     """Decode data received from UDP."""
-    if len(pack_data) != 0:
-        msgtype = pack_data[0]
-        datalen = pack_data[1]
-        crc1 = binascii.hexlify(pack_data[4:8][::-1]).decode()
-        crc2 = hex(zlib.crc32(pack_data[8 : datalen + 8]))[2:]
-        realdata = bytearray(pack_data[8 : datalen + 8])
+    if len(data) != 0:
+        msgtype = data[0]
+        datalen = data[1]
+        crc1 = binascii.hexlify(data[4:8][::-1]).decode()
+        crc2 = hex(zlib.crc32(data[8 : datalen + 8]))[2:]
+        realdata = bytearray(data[8 : datalen + 8])
         realdata = xor_crypt(realdata.decode("ascii"), secret).encode("ascii")
         return msgtype, datalen, realdata, crc1, crc2
     return 0, 0, b"", "", ""
@@ -72,21 +72,21 @@ async def udp_listener(
     device: str,
 ):
     """Listen for UDP multicast messages."""
-    global msg_received
-    global sock
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(("0.0.0.0", multicast_port))
+    global MSG_RECEIVED
+    global SOCK
+    SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    SOCK.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    SOCK.bind(("0.0.0.0", multicast_port))
     mreq = struct.pack("=4sl", socket.inet_aton(multicast_group), socket.INADDR_ANY)
-    sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-    sock.setblocking(False)
+    SOCK.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    SOCK.setblocking(False)
 
     loop = asyncio.get_running_loop()
     hass.states.async_set(f"{DOMAIN}.status", "waiting for data")
 
     while True:
         try:
-            data, addr = await loop.sock_recvfrom(sock, 1024)
+            data, addr = await loop.sock_recvfrom(SOCK, 1024)
             if len(data) != 0:
                 dataid, datalen, realdata, crc1, crc2 = unpack_data(data, secret)
                 if crc1 == crc2 and device in realdata.decode("ascii", errors="ignore"):
@@ -100,7 +100,7 @@ async def udp_listener(
                         hass.data[DOMAIN]["ip"] = addr[0]
                     data_dict = json.loads(data_content)
                     if "rec" in data_dict:
-                        msg_received = True
+                        MSG_RECEIVED = True
                         del data_dict["rec"]
                         hass.states.async_set(f"{DOMAIN}.status", "ready")
                     # Ensure 'mod', 'flt', 'pwr', and 'gas' keys are present with default values if missing
@@ -127,8 +127,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     secret = entry.data.get(CONF_PASSWORD)
 
     async def handle_json_service(call):
-        global msg_received
-        global sock
+        global MSG_RECEIVED
+        global SOCK
         json_data = call.data.get(ATTR_JSON_DATA)
         remote_ip = hass.data[DOMAIN].get("ip")
         if remote_ip is None:
@@ -142,9 +142,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             hass.states.async_set(f"{DOMAIN}.status", "busy")
             loop = asyncio.get_running_loop()
             retry = 0
-            msg_received = False
+            MSG_RECEIVED = False
             try:
-                while (not msg_received) and retry < RETRY_MAX:
+                while (not MSG_RECEIVED) and retry < RETRY_MAX:
                     parsed_data["try"] = retry
                     retry = retry + 1
                     encrypted_data = pack_data(
@@ -152,7 +152,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     )
                     await asyncio.sleep(1)  # 延时1秒
                     await loop.sock_sendto(
-                        sock, encrypted_data, (remote_ip, multicast_port)
+                        SOCK, encrypted_data, (remote_ip, multicast_port)
                     )
                 hass.states.async_set(
                     f"{DOMAIN}.status", "ready"
