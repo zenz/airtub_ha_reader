@@ -10,7 +10,7 @@ import json
 from itertools import cycle
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_DEVICE, CONF_PASSWORD
+from homeassistant.const import CONF_DEVICE, CONF_PASSWORD, CONF_MODE
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from .const import DOMAIN, EVENT_NEW_DATA, UDP_GROUP, UDP_PORT
@@ -125,6 +125,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     multicast_port = UDP_PORT
     device = entry.data.get(CONF_DEVICE)
     secret = entry.data.get(CONF_PASSWORD)
+    mode = entry.options.get(CONF_MODE, entry.data.get(CONF_MODE, "auto"))
 
     async def handle_json_service(call):
         global MSG_RECEIVED
@@ -181,6 +182,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         hass.data.setdefault(DOMAIN, {})
         hass.data[DOMAIN]["device"] = device
+        hass.data[DOMAIN]["mode"] = mode
         hass.data[DOMAIN]["ip"] = None
         hass.data[DOMAIN]["data"] = {  # Set default values initially
             "tcm": 0,

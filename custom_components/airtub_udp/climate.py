@@ -4,18 +4,12 @@ import logging
 import asyncio
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity
+from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import HVACMode, ClimateEntityFeature
 from homeassistant.const import UnitOfTemperature, ATTR_TEMPERATURE
 from .const import DOMAIN, EVENT_NEW_DATA
 
 _LOGGER = logging.getLogger(__name__)
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {
-        vol.Optional("operate", default="auto"): cv.string,
-    }
-)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -24,7 +18,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     if device is None:
         return
 
-    operate = hass.data[DOMAIN].get("operate", "auto")
+    operate = hass.data[DOMAIN].get("mode", "auto")
     op_mode = 1 if operate == "auto" else 0
 
     device1 = f"boiler_{device}_ch"
@@ -219,6 +213,7 @@ class AirtubClimateDevice(ClimateEntity):
 
     async def async_update(self):
         """Fetch new state data for the climate entity."""
+
         if self._disable_update:
             return
 

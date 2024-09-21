@@ -59,3 +59,36 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if current_entries:
             return current_entries[0]
         return None
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        """Return the options flow handler."""
+        return OptionsFlowHandler(config_entry)
+
+
+class OptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle options flow for Airtub UDP."""
+
+    def __init__(self, config_entry):
+        """Initialize the options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):
+        """Manage the options."""
+        if user_input is not None:
+            # 当用户提交新的配置时，更新配置项
+            return self.async_create_entry(title="Airtub UDP", data=user_input)
+
+        # 这里定义选项表单
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_MODE,
+                        default=self.config_entry.options.get(CONF_MODE, "auto"),
+                    ): str,
+                }
+            ),
+        )
