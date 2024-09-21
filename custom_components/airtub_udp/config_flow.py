@@ -7,6 +7,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+
 @config_entries.HANDLERS.register(DOMAIN)
 class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Airtub UDP."""
@@ -35,7 +36,9 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         data_schema = vol.Schema(
             {
                 vol.Required(CONF_DEVICE, default=user_input.get(CONF_DEVICE, "")): str,
-                vol.Required(CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")): str,
+                vol.Required(
+                    CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")
+                ): str,
                 vol.Optional(CONF_MODE, default=user_input.get(CONF_MODE, "auto")): str,
             }
         )
@@ -43,9 +46,9 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=data_schema, errors=self._errors
         )
 
-    async def async_remove(self):
+    def async_remove(self):
         """Remove a config entry."""
-        entry = await self.async_get_entry()
+        entry = self.async_get_entry()
 
         if entry:
             self.hass.config_entries.async_remove(entry.entry_id)

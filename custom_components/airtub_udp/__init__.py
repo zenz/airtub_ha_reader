@@ -114,7 +114,7 @@ async def udp_listener(
                     if "crt" in data_dict:
                         hass.bus.async_fire(EVENT_NEW_DATA)
         except socket.error as e:
-            _LOGGER.error(f"Socket error: {e}")
+            _LOGGER.error("Socket error: %s", e)
             await asyncio.sleep(1)  # Wait a bit before retrying in case of error
         await asyncio.sleep(0)  # Yield control to the event loop
 
@@ -158,14 +158,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     f"{DOMAIN}.status", "ready"
                 )  # 不管对方是否收到，都应当设置为ready
             except OSError as e:
-                _LOGGER.error(f"AIRTUB: OS error occurred while sending data: {e}")
+                _LOGGER.error("AIRTUB: OS error occurred while sending data: %s", e)
             except socket.gaierror as e:
                 _LOGGER.error(
-                    f"AIRTUB: Socket address error occurred while sending data: {e}"
+                    "AIRTUB: Socket address error occurred while sending data: %s", e
                 )
 
         except json.JSONDecodeError as e:
-            _LOGGER.warning(f"AIRTUB: Error decoding JSON: {e}")
+            _LOGGER.warning("AIRTUB: Error decoding JSON: %s", e)
             hass.states.async_set(f"{DOMAIN}.status", "error")
 
     async def handle_data_received_event(event):
@@ -175,7 +175,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 entry, ["sensor", "climate"]
             )
         except Exception as e:
-            _LOGGER.error(f"Error setting up platforms: {e}")
+            _LOGGER.error("Error setting up platforms: %s", e)
         hass.states.async_set(f"{DOMAIN}.status", "ready")
 
     try:
@@ -218,7 +218,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.bus.async_listen_once(EVENT_NEW_DATA, handle_data_received_event)
 
     except Exception as e:
-        _LOGGER.error(f"Error during setup: {e}")
+        _LOGGER.error("Error during setup: %s", e)
         return False
 
     return True

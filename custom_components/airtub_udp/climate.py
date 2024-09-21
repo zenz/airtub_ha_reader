@@ -18,11 +18,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    # """Set up the climate platform from configuration.yaml."""
-    pass
-
-
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the climate platform from a config entry."""
     device = hass.data[DOMAIN].get("device")
@@ -39,10 +34,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities([entity1, entity2])
 
     async def handle_new_data_event(event):
-        await asyncio.gather(
-            entity1.async_update(),
-            entity2.async_update()
-        )
+        await asyncio.gather(entity1.async_update(), entity2.async_update())
         entity1.async_schedule_update_ha_state(True)
         entity2.async_schedule_update_ha_state(True)
 
@@ -229,7 +221,7 @@ class AirtubClimateDevice(ClimateEntity):
         """Fetch new state data for the climate entity."""
         if self._disable_update:
             return
-        
+
         if not self.hass:
             return
 

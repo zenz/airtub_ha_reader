@@ -10,18 +10,11 @@ from .const import DOMAIN, EVENT_NEW_DATA
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_platform(
-    hass: HomeAssistant, config: dict, async_add_entities, discovery_info=None
-):
-    """Set up the UDP Multicast sensor platform."""
-    pass
-
-
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the sensor platform from a config entry."""
     device = hass.data[DOMAIN].get("device")
     if device is None:
-       return
+        return
 
     data = hass.data[DOMAIN].get("data", {})
 
@@ -92,7 +85,7 @@ class UDPMulticastSensor(SensorEntity):
             self._attr_state_class = SensorStateClass.TOTAL_INCREASING
             self._attr_precision = 6  # 小数点后6位
         elif key in ["flt"]:
-            self._attr_unit_of_measurement =None
+            self._attr_unit_of_measurement = None
             self._attr_icon = "mdi:alert-octagram"
             self._attr_device_class = None
             self._attr_state_class = None
@@ -120,12 +113,11 @@ class UDPMulticastSensor(SensorEntity):
             # 将整数值转换为字符串并确保至少有2位数字
             str_state = f"E{int_state:02}"
             return str_state
-        else:
-            return (
-                round(self._state, self._attr_precision)
-                if self._attr_precision is not None
-                else self._state
-            )
+        return (
+            round(self._state, self._attr_precision)
+            if self._attr_precision is not None
+            else self._state
+        )
 
     @property
     def unique_id(self):
@@ -174,7 +166,7 @@ class UDPMulticastSensor(SensorEntity):
             if new_value_converted != self._state:
                 self._state = new_value_converted
                 self.async_write_ha_state()
-        
+
 
 class UDPMulticastBinarySensor(BinarySensorEntity):
     """Representation of a UDP Multicast binary sensor."""
@@ -238,4 +230,3 @@ class UDPMulticastBinarySensor(BinarySensorEntity):
             if new_value_converted != self._state:
                 self._state = new_value_converted
                 self.async_write_ha_state()
-    
