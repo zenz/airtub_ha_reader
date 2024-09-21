@@ -43,7 +43,9 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(
                     CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")
                 ): str,
-                vol.Optional(CONF_MODE, default=user_input.get(CONF_MODE, "auto")): str,
+                vol.Optional(
+                    CONF_MODE, default=user_input.get(CONF_MODE, "auto")
+                ): vol.In(["auto", "manual"]),
             }
         )
         return self.async_show_form(
@@ -92,7 +94,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Optional(
                         CONF_MODE,
                         default=self.config_entry.options.get(CONF_MODE, "auto"),
-                    ): str,
+                    ): vol.In(["auto", "manual"]),
                 }
             ),
         )
