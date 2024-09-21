@@ -1,5 +1,7 @@
 """Platform for climate integration."""
 
+# pylint: disable=broad-except, global-statement, too-many-locals, too-many-statements, unused-argument, unused-variable, import-error
+
 import logging
 import asyncio
 import voluptuous as vol

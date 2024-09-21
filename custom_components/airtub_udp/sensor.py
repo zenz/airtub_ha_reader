@@ -1,5 +1,8 @@
+"""Platform for sensor integration."""
+
+# pylint: disable=broad-except, global-statement, too-many-locals, too-many-statements, unused-argument, unused-variable, import-error
+
 import logging
-from datetime import datetime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.binary_sensor import BinarySensorEntity

@@ -1,3 +1,7 @@
+""" Config flow for Airtub UDP integration """
+
+# pylint: disable=broad-except, global-statement, too-many-locals, too-many-statements, unused-argument, unused-variable, import-error
+
 import logging
 import voluptuous as vol
 from homeassistant import config_entries

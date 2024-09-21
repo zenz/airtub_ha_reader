@@ -11,5 +11,5 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/zenz/airtub_ha_reader/issues",
   "requirements": [],
-  "version": "2.0.1"
+  "version": "2.0.2"
 }

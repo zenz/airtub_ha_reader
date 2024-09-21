@@ -1,5 +1,7 @@
 """Airfit Airtub Partner integration."""
 
+# pylint: disable=broad-except, global-statement, too-many-locals, too-many-statements, unused-argument, unused-variable, import-error
+
 import asyncio
 import logging
 import socket
@@ -129,7 +131,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_json_service(call):
         global MSG_RECEIVED
-        global SOCK
         json_data = call.data.get(ATTR_JSON_DATA)
         remote_ip = hass.data[DOMAIN].get("ip")
         if remote_ip is None:
