@@ -245,9 +245,9 @@ class AirtubClimateDevice(ClimateEntity):
             else:
                 op_mode = data.get("tcm", self._mode)
                 self._man_hvac_mode = HVACMode.HEAT if op_mode else HVACMode.OFF
-                self._man_temperature = data.get("cdt", self._man_temperature)
+                self._man_temperature = data.get("cct", self._man_temperature)
                 self._man_target_temperature = data.get(
-                    "tdt", self._man_target_temperature
+                    "tct", self._man_target_temperature
                 )
                 mode = data.get("ccm", 0)
                 fst = data.get("fst", 0)
