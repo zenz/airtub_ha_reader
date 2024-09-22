@@ -44,7 +44,7 @@ class AirtubClimateDevice(ClimateEntity):
         self._name = name
         self._hass = hass
         self._mode = mode
-        self._mode_correct = False
+        self._mode_set = False
         self._attr_icon_ch = "mdi:radiator"
         self._attr_icon_dhw = "mdi:shower"
         self._temperature = 0
@@ -226,12 +226,13 @@ class AirtubClimateDevice(ClimateEntity):
             return
 
         current_heating_mode = data.get("atm", self._mode)
-        if current_heating_mode != self._mode and not self._mode_correct:
+        if current_heating_mode != self._mode and not self._mode_set:
             command = '{"atm":' + str(self._mode) + "}"
             json_data = {"cmd": command}
             await self._hass.services.async_call(DOMAIN, "sender", json_data)
             await asyncio.sleep(5)
-            self._mode_correct = True
+        else:
+            self._mode_set = True
 
         if "_ch" in self._name:
             if self._mode:
