@@ -206,9 +206,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "gas": 0.000001,
         }
 
-        hass.loop.create_task(
+        udp_listen_task = hass.loop.create_task(
             udp_listener(hass, multicast_group, multicast_port, secret, device)
         )
+        hass.data[DOMAIN]["udp_listen_task"] = udp_listen_task
 
         hass.services.async_register(
             DOMAIN,
@@ -230,11 +231,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass, entry):
     """Unload Airtub UDP config entry."""
 
-    await hass.services.async_remove(DOMAIN, SERVICE_RECEIVE_JSON)
+    udp_listen_task = hass.data[DOMAIN].get("udp_listen_task")
+    if udp_listen_task is not None:
+        udp_listen_task.cancel()  # 取消任务
+        try:
+            await udp_listen_task  # 确保任务完全取消
+        except asyncio.CancelledError:
+            _LOGGER.info("UDP listener task has been cancelled.")
+
+    hass.services.async_remove(DOMAIN, SERVICE_RECEIVE_JSON)
 
     entity_id = f"{DOMAIN}.status"
     if hass.states.get(entity_id):
-        await hass.states.async_remove(entity_id)
+        hass.states.async_remove(entity_id)
 
     unload_ok = await hass.config_entries.async_unload_platforms(
         entry, ["climate", "sensor"]
@@ -242,8 +251,11 @@ async def async_unload_entry(hass, entry):
 
     # If all platforms were successfully unloaded, remove the entry data.
     if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
-
+        hass.data[DOMAIN].pop("device")
+        hass.data[DOMAIN].pop("mode")
+        hass.data[DOMAIN].pop("ip")
+        hass.data[DOMAIN].pop("data")
+        hass.data[DOMAIN].pop("udp_listen_task")
         # Check if the domain is now empty, and if so, remove it.
         if not hass.data[DOMAIN]:
             hass.data.pop(DOMAIN)
