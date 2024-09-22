@@ -184,6 +184,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data.setdefault(DOMAIN, {})
         hass.data[DOMAIN]["device"] = device
         hass.data[DOMAIN]["mode"] = mode
+
         hass.data[DOMAIN]["ip"] = None
         hass.data[DOMAIN]["data"] = {  # Set default values initially
             "tcm": 0,

@@ -75,14 +75,24 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         """Handle the initial step of the options flow."""
-        # 在初始步骤中，可以引导用户进入 user 步骤
+        # 引导用户进入 user 步骤
         return await self.async_step_user(user_input)
 
     async def async_step_user(self, user_input=None):
         """Manage the user configuration options."""
         if user_input is not None:
-            # 当用户提交新的配置时，更新配置项
-            return self.async_create_entry(title="Airtub UDP", data=user_input)
+            # 当用户提交新的配置时，更新配置项并重新加载配置条目
+            # 先创建 entry 再 reload
+            self.hass.config_entries.async_update_entry(
+                self.config_entry, options=user_input
+            )
+
+            # 异步重载配置条目，确保配置变更生效
+            await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+
+            return self.async_create_entry(
+                title="Airtub UDP", data=None
+            )  # 无需返回 data，因为它已被保存在 options 中
 
         # 显示表单，用户可编辑选项
         return self.async_show_form(
