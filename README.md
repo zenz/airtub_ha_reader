@@ -1,6 +1,6 @@
 ## 雅图伴侣 Home Assistant 集成组件
 
-本组件实现雅图伴侣运行数据 在Home Assistant 中展示。
+本组件实现雅图伴侣运行数据 在Home Assistant 中展示并控制。
 
 ### 安装
 
