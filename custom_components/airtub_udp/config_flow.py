@@ -52,13 +52,6 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=data_schema, errors=self._errors
         )
 
-    # async def async_remove(self):
-    #     """Remove a config entry."""
-    #     entry = await self.async_get_entry()
-
-    #     if entry:
-    #         await self.hass.config_entries.async_remove(entry.entry_id)
-
     async def async_get_entry(self):
         """Get the current config entry."""
         current_entries = self.hass.config_entries.async_entries(DOMAIN)
