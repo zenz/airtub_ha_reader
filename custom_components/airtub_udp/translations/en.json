@@ -1,18 +1,38 @@
 {
     "config": {
+        "flow_title": "Airtub Configuration",
         "step": {
             "user": {
-                "title": "Configure Airtub UDP",
+                "title": "Configure Airtub",
                 "description": "Please enter the following fields to configure your device:",
                 "data": {
-                    "device": "Device Serial Number",
+                    "device": "Device Serial",
                     "password": "Device Password",
-                    "mode": "auto or manual"
+                    "mode": "Heating Mode"
                 }
             }
         },
         "abort": {
             "already_configured": "Device is already configured"
+        }
+    },
+    "options": {
+        "step": {
+            "user": {
+                "title": "Configure Airtub",
+                "description": "Please configure your device:",
+                "data": {
+                    "mode": "Heating Mode"
+                }
+            }
+        }
+    },
+    "selector": {
+        "mode": {
+            "options": {
+                "auto": "Automatic",
+                "manual": "Manual"
+            }
         }
     },
     "services": {

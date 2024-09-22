@@ -43,9 +43,9 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(
                     CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")
                 ): str,
-                vol.Optional(
+                vol.Required(
                     CONF_MODE, default=user_input.get(CONF_MODE, "auto")
-                ): vol.In(["auto", "manual"]),
+                ): vol.In({"auto": "Automatic", "manual": "Manual"}),
             }
         )
         return self.async_show_form(
@@ -81,20 +81,25 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
-        """Manage the options."""
+        """Handle the initial step of the options flow."""
+        # 在初始步骤中，可以引导用户进入 user 步骤
+        return await self.async_step_user(user_input)
+
+    async def async_step_user(self, user_input=None):
+        """Manage the user configuration options."""
         if user_input is not None:
             # 当用户提交新的配置时，更新配置项
             return self.async_create_entry(title="Airtub UDP", data=user_input)
 
-        # 这里定义选项表单
+        # 显示表单，用户可编辑选项
         return self.async_show_form(
-            step_id="init",
+            step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Optional(
+                    vol.Required(
                         CONF_MODE,
                         default=self.config_entry.options.get(CONF_MODE, "auto"),
-                    ): vol.In(["auto", "manual"]),
+                    ): vol.In({"auto": "Automatic", "manual": "Manual"}),
                 }
             ),
         )
