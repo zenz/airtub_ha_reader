@@ -251,13 +251,12 @@ async def async_unload_entry(hass, entry):
 
     # If all platforms were successfully unloaded, remove the entry data.
     if unload_ok:
-        hass.data[DOMAIN].pop("device")
-        hass.data[DOMAIN].pop("mode")
-        hass.data[DOMAIN].pop("ip")
-        hass.data[DOMAIN].pop("data")
-        hass.data[DOMAIN].pop("udp_listen_task")
+        hass.data[DOMAIN].clear()
         # Check if the domain is now empty, and if so, remove it.
         if not hass.data[DOMAIN]:
             hass.data.pop(DOMAIN)
+            _LOGGER.warning("Removed empty domain data")
+        else:
+            _LOGGER.warning("Domain data not empty")
 
     return unload_ok
