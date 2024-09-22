@@ -256,8 +256,5 @@ async def async_unload_entry(hass, entry):
         # Check if the domain is now empty, and if so, remove it.
         if not hass.data[DOMAIN]:
             hass.data.pop(DOMAIN)
-            _LOGGER.warning("Removed empty domain data")
-        else:
-            _LOGGER.warning("Domain data not empty")
 
     return unload_ok
