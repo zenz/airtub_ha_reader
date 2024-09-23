@@ -1,10 +1,11 @@
 {
   "domain": "airtub_udp",
-  "name": "airtub_udp",
+  "name": "Airtub Partner",
   "codeowners": [
     "@zenz"
   ],
   "config_flow": true,
+  "single_config_entry": true,
   "dependencies": [],
   "documentation": "https://github.com/zenz/airtub_ha_reader",
   "integration_type": "hub",

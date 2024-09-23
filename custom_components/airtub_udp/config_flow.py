@@ -29,7 +29,8 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_configured()
 
         if user_input is not None:
-            return self.async_create_entry(title="Airtub UDP", data=user_input)
+            device_name = user_input.get(CONF_DEVICE, "device serial").upper()
+            return self.async_create_entry(title=device_name, data=user_input)
 
         return self._show_config_form(user_input)
 
@@ -98,8 +99,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             # 异步重载配置条目，确保配置变更生效
             await self.hass.config_entries.async_reload(self.config_entry.entry_id)
 
+            device_name = user_input.get(CONF_DEVICE, "device serial").upper()
             return self.async_create_entry(
-                title="Airtub UDP", data=None
+                title=device_name, data=None
             )  # 无需返回 data，因为它已被保存在 options 中
 
         # 显示表单，用户可编辑选项

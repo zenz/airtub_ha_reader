@@ -125,7 +125,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Airtub UDP from a config entry."""
     multicast_group = UDP_GROUP
     multicast_port = UDP_PORT
-    device = entry.data.get(CONF_DEVICE)
+    device = entry.data.get(CONF_DEVICE).lower()
     secret = entry.data.get(CONF_PASSWORD)
     mode = entry.options.get(CONF_MODE, entry.data.get(CONF_MODE, "auto"))
 
