@@ -8,7 +8,7 @@
 
 #### 手动安装：
 
-在 Home Assistant 的 custom_components 目录下新建一个 airtub_udp 目录，然后将本项目custom_components目录下所有文件复制到新建的 airtub_udp 目录下。
+在 Home Assistant 的 custom_components 目录下新建一个 airtub_udp 目录，然后将本项目 custom_components/airtub_udp 目录下所有文件复制到新建的 airtub_udp 目录下。
 
 #### HACS安装：
 
@@ -21,7 +21,7 @@
 
 ### 配置
 
-从菜单栏选择【配置】【设备与服务】【添加集成】，找到airtub_udp，点击添加，按照提示填写设备号，密码等信息，确认即可。
+从菜单栏选择【配置】【设备与服务】【添加集成】，找到Airtub Partner，点击添加，按照提示填写设备号，密码信息，选择采暖模式，确认即可。
 
 ### 使用
 
@@ -49,6 +49,11 @@ _xxx 的各项解释如下：
 "vir": 屏蔽高温杀菌模式 0-未开启、1-开启(仅系统炉) [可修改]
 "tdf": 生活水启停温差(仅系统炉) [可修改]
 ```
+
+### Climate组件
+初始化完成，会同时提供两个Climate组件，分别是：
+boiler_[device]_ch 用于采暖控制
+boiler_[device]_dhw，用于生活热水控制。
 
 提供的服务
 ```yaml
