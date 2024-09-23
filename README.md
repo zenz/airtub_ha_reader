@@ -53,8 +53,10 @@ _xxx 的各项解释如下：
 
 #### Climate组件
 初始化完成，会同时提供两个Climate组件，分别是：
-boiler_[device]_ch 用于采暖控制
-boiler_[device]_dhw，用于生活热水控制。
+```
+climate.boiler_[device]_ch 用于采暖控制
+climate.boiler_[device]_dhw，用于生活热水控制。
+```
 
 ### 提供的服务
 ```yaml
