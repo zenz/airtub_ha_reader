@@ -25,6 +25,7 @@
 
 ### 使用
 
+#### Sensor组件
 添加后，可以在【配置】- 【设备与服务】-【实体】中找到 sensor.boiler_[device]_xxx 的实体，其中 device 为配置中的 device 值。
 
 _xxx 的各项解释如下：
@@ -50,12 +51,12 @@ _xxx 的各项解释如下：
 "tdf": 生活水启停温差(仅系统炉) [可修改]
 ```
 
-### Climate组件
+#### Climate组件
 初始化完成，会同时提供两个Climate组件，分别是：
 boiler_[device]_ch 用于采暖控制
 boiler_[device]_dhw，用于生活热水控制。
 
-提供的服务
+### 提供的服务
 ```yaml
 service: airtub_udp.sender
 data:
