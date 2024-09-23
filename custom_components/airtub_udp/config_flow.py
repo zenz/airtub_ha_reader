@@ -45,7 +45,7 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")
                 ): str,
                 vol.Required(
-                    CONF_MODE, default=self.config_entry.options.get(CONF_MODE, "auto")
+                    CONF_MODE, default=user_input.get(CONF_MODE, "auto")
                 ): selector(
                     {
                         "select": {
