@@ -7,6 +7,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.const import CONF_DEVICE, CONF_PASSWORD, CONF_MODE
+from homeassistant.helpers.selector import selector
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,8 +45,15 @@ class AirtubUDPConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")
                 ): str,
                 vol.Required(
-                    CONF_MODE, default=user_input.get(CONF_MODE, "auto")
-                ): vol.In({"auto": "Automatic", "manual": "Manual"}),
+                    "mode", default=self.config_entry.options.get("mode", "auto")
+                ): selector(
+                    {
+                        "select": {
+                            "options": ["auto", "manual"],
+                            "translation_key": "mode",  # 指定翻译键
+                        }
+                    }
+                ),
             }
         )
         return self.async_show_form(
@@ -100,9 +108,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_MODE,
-                        default=self.config_entry.options.get(CONF_MODE, "auto"),
-                    ): vol.In({"auto": "Automatic", "manual": "Manual"}),
+                        "mode", default=self.config_entry.options.get("mode", "auto")
+                    ): selector(
+                        {
+                            "select": {
+                                "options": ["auto", "manual"],
+                                "translation_key": "mode",  # 指定翻译键
+                            }
+                        }
+                    ),
                 }
             ),
         )
