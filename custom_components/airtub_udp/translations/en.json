@@ -47,5 +47,15 @@
                 }
             }
         }
+    },
+    "entity": {
+        "climate": {
+            "ch_control": {
+                "name": "Heating Control"
+            },
+            "dhw_control": {
+                "name": "Hot Water Control"
+            }
+        }
     }
 }

@@ -47,5 +47,15 @@
                 }
             }
         }
+    },
+    "entity": {
+        "climate": {
+            "ch_control": {
+                "name": "采暖控制"
+            },
+            "dhw_control": {
+                "name": "热水控制"
+            }
+        }
     }
 }

@@ -41,7 +41,8 @@ class AirtubClimateDevice(ClimateEntity):
     def __init__(self, hass, name, mode):
         """Initialize the climate device."""
         self._enable_turn_on_off_backwards_compatibility = False
-        self._name = name
+        self._unique_id = name
+        self._name = self._generate_friendly_name()
         self._hass = hass
         self._mode = mode
         self._mode_set = False
@@ -65,19 +66,30 @@ class AirtubClimateDevice(ClimateEntity):
         )
         self._disable_update = False
 
-    @property
-    def name(self):
-        """Return the name of the climate device."""
-        return self._name
+    def _generate_friendly_name(self):
+        """Generate a friendly name."""
+        if "_ch" in self._unique_id:
+            return "ch_control"
+        return "dhw_control"
 
     @property
     def unique_id(self):
         """Return the unique ID of the climate device."""
+        return self._unique_id
+
+    @property
+    def translation_key(self):
+        """Return the translation key."""
         return self._name
 
     @property
+    def has_entity_name(self):
+        """Return the entity name."""
+        return True
+
+    @property
     def icon(self):
-        if "_ch" in self._name:
+        if "_ch" in self._unique_id:
             return self._attr_icon_ch
         return self._attr_icon_dhw
 
@@ -99,7 +111,7 @@ class AirtubClimateDevice(ClimateEntity):
     @property
     def hvac_mode(self):
         """Return current operation mode."""
-        if "_ch" in self._name:
+        if "_ch" in self._unique_id:
             if self._mode:
                 return self._hvac_mode
             return self._man_hvac_mode
@@ -113,7 +125,7 @@ class AirtubClimateDevice(ClimateEntity):
     @property
     def target_temperature(self):
         """Return the temperature we try to reach."""
-        if "_ch" in self._name:
+        if "_ch" in self._unique_id:
             if self._mode:
                 return self._target_temperature
             return self._man_target_temperature
@@ -122,7 +134,7 @@ class AirtubClimateDevice(ClimateEntity):
     @property
     def current_temperature(self):
         """Return the current temperature."""
-        if "_ch" in self._name:
+        if "_ch" in self._unique_id:
             if self._mode:
                 return self._temperature
             return self._man_temperature
@@ -131,7 +143,7 @@ class AirtubClimateDevice(ClimateEntity):
     @property
     def min_temp(self):
         """Return the minimum temperature."""
-        if "_ch" in self._name:
+        if "_ch" in self._unique_id:
             if self._mode:
                 return 4  # Minimum temperature that can be set
             return 35
@@ -140,7 +152,7 @@ class AirtubClimateDevice(ClimateEntity):
     @property
     def max_temp(self):
         """Return the maximum temperature."""
-        if "_ch" in self._name:
+        if "_ch" in self._unique_id:
             if self._mode:
                 return 30
             return 80
@@ -149,7 +161,7 @@ class AirtubClimateDevice(ClimateEntity):
     @property
     def hvac_action(self):
         """Return current HVAC mode."""
-        if "_ch" in self._name:
+        if "_ch" in self._unique_id:
             return self._operation
         return self._dhw_operation
 
@@ -157,7 +169,7 @@ class AirtubClimateDevice(ClimateEntity):
         """Set new target hvac mode."""
         mode = "1" if hvac_mode == HVACMode.HEAT else "0"
         command = None
-        if "_ch" in self._name:
+        if "_ch" in self._unique_id:
             if self._mode:
                 self._hvac_mode = hvac_mode
                 command = '{"atm":' + mode + "}"
@@ -189,7 +201,7 @@ class AirtubClimateDevice(ClimateEntity):
         """Set new target temperature."""
         command = None
         if ATTR_TEMPERATURE in kwargs:
-            if "_ch" in self._name:
+            if "_ch" in self._unique_id:
                 if self._mode:
                     self._target_temperature = kwargs[ATTR_TEMPERATURE]
                     command = '{"trt":' + str(self._target_temperature) + "}"
@@ -234,7 +246,7 @@ class AirtubClimateDevice(ClimateEntity):
         else:
             self._mode_set = True
 
-        if "_ch" in self._name:
+        if "_ch" in self._unique_id:
             if self._mode:
                 op_mode = data.get("atm", self._mode)
                 self._hvac_mode = HVACMode.HEAT if op_mode else HVACMode.OFF
