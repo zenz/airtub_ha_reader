@@ -50,11 +50,14 @@
     },
     "entity": {
         "climate": {
-            "ch_control": {
-                "name": "采暖控制"
+            "ch_auto_control": {
+                "name": "采暖控制[室温]"
+            },
+            "ch_man_control": {
+                "name": "采暖控制[水温]"
             },
             "dhw_control": {
-                "name": "热水控制"
+                "name": "生活热水控制"
             }
         }
     }
