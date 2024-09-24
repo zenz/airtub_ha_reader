@@ -41,11 +41,11 @@ class AirtubClimateDevice(ClimateEntity):
     def __init__(self, hass, name, mode):
         """Initialize the climate device."""
         self._enable_turn_on_off_backwards_compatibility = False
+        self._mode = mode
         self._unique_id = name
         self.entity_id = f"climate.{name}"
         self._name = self._generate_friendly_name()
         self._hass = hass
-        self._mode = mode
         self._mode_set = False
         self._attr_icon_ch = "mdi:radiator"
         self._attr_icon_dhw = "mdi:shower"
@@ -70,7 +70,9 @@ class AirtubClimateDevice(ClimateEntity):
     def _generate_friendly_name(self):
         """Generate a friendly name."""
         if "_ch" in self._unique_id:
-            return "ch_control"
+            if self._mode:
+                return "ch_auto_control"
+            return "ch_man_control"
         return "dhw_control"
 
     @property

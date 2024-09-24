@@ -50,11 +50,14 @@
     },
     "entity": {
         "climate": {
-            "ch_control": {
-                "name": "Heating Control"
+            "ch_auto_control": {
+                "name": "Heating[Room Temp]"
+            },
+            "ch_man_control": {
+                "name": "Heating[Water Temp]"
             },
             "dhw_control": {
-                "name": "Hot Water Control"
+                "name": "Domestic Hot Water"
             }
         }
     }
