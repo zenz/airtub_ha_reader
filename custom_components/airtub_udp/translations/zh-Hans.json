@@ -31,8 +31,8 @@
     "selector": {
         "mode": {
             "options": {
-                "auto": "自动",
-                "manual": "手动"
+                "auto": "自动[室温]",
+                "manual": "手动[水温]"
             }
         }
     },
