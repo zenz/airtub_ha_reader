@@ -31,8 +31,8 @@
     "selector": {
         "mode": {
             "options": {
-                "auto": "Automatic",
-                "manual": "Manual"
+                "auto": "Automatic[Room Temp]",
+                "manual": "Manual[Water Temp]"
             }
         }
     },
