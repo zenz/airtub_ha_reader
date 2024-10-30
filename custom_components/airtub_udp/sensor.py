@@ -112,7 +112,7 @@ class UDPMulticastSensor(SensorEntity):
             # 将状态值转换为整数
             int_state = int(self._state)
             if int_state == 0:
-                return "OK"
+                return "off"
             # 将整数值转换为字符串并确保至少有2位数字
             str_state = f"E{int_state:02}"
             return str_state
