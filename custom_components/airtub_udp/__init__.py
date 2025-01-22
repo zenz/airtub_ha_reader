@@ -81,6 +81,7 @@ async def udp_listener(
     SOCK.bind(("0.0.0.0", multicast_port))
     mreq = struct.pack("=4sl", socket.inet_aton(multicast_group), socket.INADDR_ANY)
     SOCK.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    SOCK.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 10)
     SOCK.setblocking(False)
 
     loop = asyncio.get_running_loop()
