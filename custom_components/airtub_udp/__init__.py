@@ -78,6 +78,7 @@ async def udp_listener(
     global SOCK
     SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     SOCK.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    SOCK.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     SOCK.bind(("0.0.0.0", multicast_port))
     mreq = struct.pack("=4sl", socket.inet_aton(multicast_group), socket.INADDR_ANY)
     SOCK.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
