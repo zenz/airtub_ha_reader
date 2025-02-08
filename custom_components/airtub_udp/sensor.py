@@ -16,19 +16,17 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the sensor platform from a config entry."""
     device = hass.data[DOMAIN].get("device")
-    if device is None:
+    if not device:
         return
 
     data = hass.data[DOMAIN].get("data", {})
 
-    entities = []
-    for key, value in data.items():
-        entity_id = f"boiler_{device}_{key}"
-        if key.endswith("m") or key.endswith("fst") or key.endswith("ovr"):
-            entity = UDPMulticastBinarySensor(hass, device, key, value, entity_id)
-        else:
-            entity = UDPMulticastSensor(hass, device, key, value, entity_id)
-        entities.append(entity)
+    entities = [
+        UDPMulticastBinarySensor(hass, device, key, value, f"boiler_{device}_{key}")
+        if key.endswith("m") or key.endswith("fst") or key.endswith("ovr")
+        else UDPMulticastSensor(hass, device, key, value, f"boiler_{device}_{key}")
+        for key, value in data.items()
+    ]
 
     async_add_entities(entities, update_before_add=True)
 

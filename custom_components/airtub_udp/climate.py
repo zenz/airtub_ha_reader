@@ -15,22 +15,22 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the climate platform from a config entry."""
     device = hass.data[DOMAIN].get("device")
-    if device is None:
+    if not device:
         return
 
     operate = hass.data[DOMAIN].get("mode", "auto")
     op_mode = 1 if operate == "auto" else 0
 
-    device1 = f"boiler_{device}_ch"
-    device2 = f"boiler_{device}_dhw"
-    entity1 = AirtubClimateDevice(hass, device1, op_mode)
-    entity2 = AirtubClimateDevice(hass, device2, op_mode)
-    async_add_entities([entity1, entity2])
+    devices = [
+        AirtubClimateDevice(hass, f"boiler_{device}_ch", op_mode),
+        AirtubClimateDevice(hass, f"boiler_{device}_dhw", op_mode)
+    ]
+    async_add_entities(devices)
 
     async def handle_new_data_event(event):
-        await asyncio.gather(entity1.async_update(), entity2.async_update())
-        entity1.async_schedule_update_ha_state(True)
-        entity2.async_schedule_update_ha_state(True)
+        await asyncio.gather(*(device.async_update() for device in devices))
+        for device in devices:
+            device.async_schedule_update_ha_state(True)
 
     hass.bus.async_listen(EVENT_NEW_DATA, handle_new_data_event)
 
@@ -70,9 +70,7 @@ class AirtubClimateDevice(ClimateEntity):
     def _generate_friendly_name(self):
         """Generate a friendly name."""
         if "_ch" in self._unique_id:
-            if self._mode:
-                return "ch_auto_control"
-            return "ch_man_control"
+            return "ch_auto_control" if self._mode else "ch_man_control"
         return "dhw_control"
 
     @property
@@ -92,9 +90,7 @@ class AirtubClimateDevice(ClimateEntity):
 
     @property
     def icon(self):
-        if "_ch" in self._unique_id:
-            return self._attr_icon_ch
-        return self._attr_icon_dhw
+        return self._attr_icon_ch if "_ch" in self._unique_id else self._attr_icon_dhw
 
     @property
     def temperature_unit(self):
@@ -115,9 +111,7 @@ class AirtubClimateDevice(ClimateEntity):
     def hvac_mode(self):
         """Return current operation mode."""
         if "_ch" in self._unique_id:
-            if self._mode:
-                return self._hvac_mode
-            return self._man_hvac_mode
+            return self._hvac_mode if self._mode else self._man_hvac_mode
         return self._dhw_mode
 
     @property
@@ -129,44 +123,34 @@ class AirtubClimateDevice(ClimateEntity):
     def target_temperature(self):
         """Return the temperature we try to reach."""
         if "_ch" in self._unique_id:
-            if self._mode:
-                return self._target_temperature
-            return self._man_target_temperature
+            return self._target_temperature if self._mode else self._man_target_temperature
         return self._dhw_target_temperature
 
     @property
     def current_temperature(self):
         """Return the current temperature."""
         if "_ch" in self._unique_id:
-            if self._mode:
-                return self._temperature
-            return self._man_temperature
+            return self._temperature if self._mode else self._man_temperature
         return self._dhw_temperature
 
     @property
     def min_temp(self):
         """Return the minimum temperature."""
         if "_ch" in self._unique_id:
-            if self._mode:
-                return 4  # Minimum temperature that can be set
-            return 35
+            return 4 if self._mode else 35
         return 35
 
     @property
     def max_temp(self):
         """Return the maximum temperature."""
         if "_ch" in self._unique_id:
-            if self._mode:
-                return 30
-            return 80
+            return 30 if self._mode else 80
         return 60
 
     @property
     def hvac_action(self):
         """Return current HVAC mode."""
-        if "_ch" in self._unique_id:
-            return self._operation
-        return self._dhw_operation
+        return self._operation if "_ch" in self._unique_id else self._dhw_operation
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new target hvac mode."""
