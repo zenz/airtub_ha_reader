@@ -104,6 +104,9 @@ async def udp_listener(
                     data_dict.setdefault("mod", 0)
                     data_dict.setdefault("flt", 0)
                     data_dict.setdefault("pwr", 0)
+                    data_dict.setdefault("sch", 0)
+                    data_dict.setdefault("tmd", 0)
+                    data_dict.setdefault("tol", 4)
                     if "gas" in data_dict and data_dict["gas"] == 0:
                         data_dict["gas"] = 0.000001
 
