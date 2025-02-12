@@ -48,7 +48,7 @@ def pack_data(msgtype: int, message: str, secret: str):
     send_data = bytearray(struct.pack("BB2x", msgtype, len_num))
     send_data.extend(crc)
     send_data.extend(crypt_data)
-    send_data.extend(bytearray(180 - len_num))
+    # send_data.extend(bytearray(180 - len_num))
 
     return bytes(send_data)
 

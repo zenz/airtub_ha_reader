@@ -23,7 +23,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     entities = [
         UDPMulticastBinarySensor(hass, device, key, value, f"boiler_{device}_{key}")
-        if key.endswith("m") or key.endswith("fst") or key.endswith("ovr")
+        if key.endswith(("m", "fst", "ovr", "sch", "tmd"))
         else UDPMulticastSensor(hass, device, key, value, f"boiler_{device}_{key}")
         for key, value in data.items()
     ]
