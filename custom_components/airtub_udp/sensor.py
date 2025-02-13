@@ -23,7 +23,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     entities = [
         UDPMulticastBinarySensor(hass, device, key, value, f"boiler_{device}_{key}")
-        if key.endswith(("m", "fst", "ovr", "sch", "tmd"))
+        if key.endswith(("m", "fst", "loc", "ovr", "sch", "tmd", "vir"))
         else UDPMulticastSensor(hass, device, key, value, f"boiler_{device}_{key}")
         for key, value in data.items()
     ]
@@ -61,7 +61,7 @@ class UDPMulticastSensor(SensorEntity):
 
     def _setup_attributes(self, key):
         """Setup sensor attributes based on key."""
-        if key in ["cct", "cdt", "tct", "tdt", "odt", "tdf"]:
+        if key in ["cct", "cdt", "tct", "tdt", "odt"]:
             self._attr_unit_of_measurement = UnitOfTemperature.CELSIUS
             self._attr_icon = "mdi:thermometer"
             self._attr_device_class = SensorDeviceClass.TEMPERATURE
@@ -91,6 +91,12 @@ class UDPMulticastSensor(SensorEntity):
             self._attr_device_class = None
             self._attr_state_class = None
             self._attr_precision = None
+        elif key in ["pwr"]:
+            self._attr_unit_of_measurement = None
+            self._attr_icon = "mdi:battery"
+            self._attr_device_class = None
+            self._attr_state_class = "measurement"
+            self._attr_precision = 0 # 默认京都为0
         else:
             self._attr_unit_of_measurement = None
             self._attr_icon = "mdi:numeric"

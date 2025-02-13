@@ -170,9 +170,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "mode": mode,
             "ip": None,
             "data": {
-                "tcm": 0, "tct": 0, "ccm": 0, "cct": 0, "tdm": 0, "tdt": 0,
-                "cdm": 0, "cdt": 0, "atm": 0, "trt": 0, "crt": 0, "pwr": 0,
-                "odt": 0, "coe": 0, "fst": 0, "mod": 0, "flt": 0, "gas": 0.000001,
+                "sch":0, "loc":0, "tmd":0, "tol":0, "tcm":0, "tct":0,
+                "tdm":0, "tdt":0, "atm":0, "trt":0, "crt":0, "pwr":0,
+                "odt":0 ,"coe":0 ,"ccm":0, "cct":0, "cdm":0, "cdt":0,
+                "fst":0,"ovr":0,"gas":0.000001
             }
         })
 
