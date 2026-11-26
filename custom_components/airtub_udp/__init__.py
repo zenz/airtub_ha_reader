@@ -15,7 +15,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_DEVICE, CONF_PASSWORD, CONF_MODE
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from .const import DOMAIN, EVENT_NEW_DATA, UDP_GROUP, UDP_PORT
+from .const import DOMAIN, EVENT_NEW_DATA, UDP_GROUP, UDP_PORT, DEFAULT_DATA
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -101,16 +101,12 @@ async def udp_listener(
                         MSG_RECEIVED = True
                         del data_dict["rec"]
                         hass.states.async_set(f"{DOMAIN}.status", "ready")
-                    data_dict.setdefault("mod", 0)
-                    data_dict.setdefault("flt", 0)
-                    data_dict.setdefault("pwr", 0)
-                    data_dict.setdefault("sch", 0)
-                    data_dict.setdefault("tmd", 0)
-                    data_dict.setdefault("tol", 4)
                     if "gas" in data_dict and data_dict["gas"] == 0:
                         data_dict["gas"] = 0.000001
 
-                    hass.data[DOMAIN]["data"] = data_dict
+                    # 合并而不是替换：某一帧缺少字段时保留默认值/上一帧的值，
+                    # 否则基于 data 创建的实体会随着帧内容变化而消失。
+                    hass.data[DOMAIN].setdefault("data", {}).update(data_dict)
                     if "crt" in data_dict:
                         hass.bus.async_fire(EVENT_NEW_DATA)
         except socket.error as e:
@@ -169,12 +165,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "device": device,
             "mode": mode,
             "ip": None,
-            "data": {
-                "sch":0, "loc":0, "tmd":0, "tol":0, "tcm":0, "tct":0,
-                "tdm":0, "tdt":0, "atm":0, "trt":0, "crt":0, "pwr":0,
-                "odt":0 ,"coe":0 ,"ccm":0, "cct":0, "cdm":0, "cdt":0,
-                "fst":0,"ovr":0,"gas":0.000001
-            }
+            "data": dict(DEFAULT_DATA),
         })
 
         udp_listen_task = hass.loop.create_task(
