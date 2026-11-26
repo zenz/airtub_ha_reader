@@ -13,6 +13,17 @@ from .const import DOMAIN, EVENT_NEW_DATA
 _LOGGER = logging.getLogger(__name__)
 
 
+BINARY_SENSOR_SUFFIXES = ("m", "fst", "loc", "ovr", "sch", "tmd", "vir")
+
+
+def _create_entity(hass, device, key, value):
+    """Create the right entity type for a data key."""
+    entity_id = f"boiler_{device}_{key}"
+    if key.endswith(BINARY_SENSOR_SUFFIXES):
+        return UDPMulticastBinarySensor(hass, device, key, value, entity_id)
+    return UDPMulticastSensor(hass, device, key, value, entity_id)
+
+
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the sensor platform from a config entry."""
     device = hass.data[DOMAIN].get("device")
@@ -21,20 +32,36 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     data = hass.data[DOMAIN].get("data", {})
 
-    entities = [
-        UDPMulticastBinarySensor(hass, device, key, value, f"boiler_{device}_{key}")
-        if key.endswith(("m", "fst", "loc", "ovr", "sch", "tmd", "vir"))
-        else UDPMulticastSensor(hass, device, key, value, f"boiler_{device}_{key}")
-        for key, value in data.items()
-    ]
+    entities = []
+    known_keys = set()
 
-    async_add_entities(entities, update_before_add=True)
+    def _build_new_entities(current_data):
+        """Build entities for keys that haven't been added yet."""
+        new_entities = []
+        for key, value in current_data.items():
+            if key in known_keys:
+                continue
+            known_keys.add(key)
+            new_entities.append(_create_entity(hass, device, key, value))
+        return new_entities
+
+    new_entities = _build_new_entities(data)
+    if new_entities:
+        async_add_entities(new_entities, update_before_add=True)
+        entities.extend(new_entities)
 
     @callback
     def handle_data_changed_event(event):
-        """Handle the custom event and notify all entities."""
+        """Handle the custom event, adding entities for newly reported keys."""
+        # 设备之后才上报的字段（例如某些固件/工况下缺失的项）动态补建实体，
+        # 不必等下一次 HA 重启。
+        new_entities = _build_new_entities(hass.data[DOMAIN].get("data", {}))
+        if new_entities:
+            async_add_entities(new_entities, update_before_add=True)
+
         for entity in entities:
             entity.handle_event(event)
+        entities.extend(new_entities)
 
     hass.bus.async_listen(EVENT_NEW_DATA, handle_data_changed_event)
 

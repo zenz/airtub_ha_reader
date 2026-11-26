@@ -34,8 +34,11 @@ Partner，点击添加，按照提示填写设备号，密码信息，选择采�
 
 #### Sensor组件
 
-添加后，可以在【配置】- 【设备与服务】-【实体】中找到 sensor.boiler_[device]_xxx
+添加后，可以在【配置】- 【设备与服务】-【实体】中找到 boiler_[device]_xxx
 的实体，其中 device 为配置中的 device 值。
+
+注意：状态类（0/1 开关）项在 HA 中属于 binary_sensor 域，例如
+binary_sensor.boiler_[device]_cdm；其余为 sensor 域。
 
 _xxx 的各项解释如下：
 
