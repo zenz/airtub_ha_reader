@@ -1,17 +1,15 @@
 """Platform for sensor integration."""
 
-# pylint: disable=broad-except, global-statement, too-many-locals, too-many-statements, too-many-instance-attributes, too-many-arguments, unused-argument, unused-variable, import-error, overridden-final-method
-
-import logging
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.binary_sensor import BinarySensorEntity
-from homeassistant.const import UnitOfTemperature, PERCENTAGE
-from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
+from homeassistant.const import UnitOfRatio, UnitOfTemperature, UnitOfVolume
+from homeassistant.core import HomeAssistant, callback
+
 from .const import DOMAIN, EVENT_NEW_DATA
-
-_LOGGER = logging.getLogger(__name__)
-
 
 BINARY_SENSOR_SUFFIXES = ("m", "fst", "loc", "ovr", "sch", "tmd", "vir")
 
@@ -31,12 +29,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         return
 
     data = hass.data[DOMAIN].get("data", {})
-
     entities = []
     known_keys = set()
 
     def _build_new_entities(current_data):
-        """Build entities for keys that haven't been added yet."""
         new_entities = []
         for key, value in current_data.items():
             if key in known_keys:
@@ -47,27 +43,34 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     new_entities = _build_new_entities(data)
     if new_entities:
-        async_add_entities(new_entities, update_before_add=True)
+        async_add_entities(new_entities)
         entities.extend(new_entities)
 
     @callback
     def handle_data_changed_event(event):
-        """Handle the custom event, adding entities for newly reported keys."""
-        # 设备之后才上报的字段（例如某些固件/工况下缺失的项）动态补建实体，
-        # 不必等下一次 HA 重启。
-        new_entities = _build_new_entities(hass.data[DOMAIN].get("data", {}))
+        """Handle new data and add entities for newly reported keys."""
+        runtime = hass.data.get(DOMAIN)
+        if runtime is None:
+            return
+
+        new_entities = _build_new_entities(runtime.get("data", {}))
         if new_entities:
-            async_add_entities(new_entities, update_before_add=True)
+            async_add_entities(new_entities)
+            entities.extend(new_entities)
 
         for entity in entities:
-            entity.handle_event(event)
-        entities.extend(new_entities)
+            if entity.hass is not None:
+                entity.handle_event(event)
 
-    hass.bus.async_listen(EVENT_NEW_DATA, handle_data_changed_event)
+    config_entry.async_on_unload(
+        hass.bus.async_listen(EVENT_NEW_DATA, handle_data_changed_event)
+    )
 
 
 class UDPMulticastSensor(SensorEntity):
-    """Representation of a UDP Multicast sensor."""
+    """Representation of a UDP multicast sensor."""
+
+    _attr_should_poll = False
 
     def __init__(
         self,
@@ -81,129 +84,94 @@ class UDPMulticastSensor(SensorEntity):
         self._hass = hass
         self._device = device
         self._key = key
-        self._name = f"boiler_{device}_{key}"
+        self._attr_name = f"boiler_{device}_{key}"
+        self._attr_unique_id = entity_id
         self._state = self._convert_to_number(initial_value)
-        self._entity_id = entity_id
         self._setup_attributes(key)
 
     def _setup_attributes(self, key):
-        """Setup sensor attributes based on key."""
+        """Set up sensor attributes based on the data key."""
         if key in ["cct", "cdt", "tct", "tdt", "odt"]:
-            self._attr_unit_of_measurement = UnitOfTemperature.CELSIUS
+            self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
             self._attr_icon = "mdi:thermometer"
             self._attr_device_class = SensorDeviceClass.TEMPERATURE
-            self._attr_state_class = "measurement"
-            self._attr_precision = 0  # 温度精度为0
+            self._attr_state_class = SensorStateClass.MEASUREMENT
+            self._attr_suggested_display_precision = 0
         elif key in ["trt", "crt"]:
-            self._attr_unit_of_measurement = UnitOfTemperature.CELSIUS
+            self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
             self._attr_icon = "mdi:thermometer"
             self._attr_device_class = SensorDeviceClass.TEMPERATURE
-            self._attr_state_class = "measurement"
-            self._attr_precision = 1  # 温度精度为1
-        elif key in ["mod"]:
-            self._attr_unit_of_measurement = PERCENTAGE
+            self._attr_state_class = SensorStateClass.MEASUREMENT
+            self._attr_suggested_display_precision = 1
+        elif key == "mod":
+            self._attr_native_unit_of_measurement = UnitOfRatio.PERCENTAGE
             self._attr_icon = "mdi:percent-box"
             self._attr_device_class = None
-            self._attr_state_class = "measurement"
-            self._attr_precision = 0  # 百分比精度为0
-        elif key in ["gas"]:
-            self._attr_unit_of_measurement = "m³"
+            self._attr_state_class = SensorStateClass.MEASUREMENT
+            self._attr_suggested_display_precision = 0
+        elif key == "gas":
+            self._attr_native_unit_of_measurement = UnitOfVolume.CUBIC_METERS
             self._attr_icon = "mdi:meter-gas"
             self._attr_device_class = SensorDeviceClass.GAS
             self._attr_state_class = SensorStateClass.TOTAL_INCREASING
-            self._attr_precision = 6  # 小数点后6位
-        elif key in ["flt"]:
-            self._attr_unit_of_measurement = None
+            self._attr_suggested_display_precision = 6
+        elif key == "flt":
+            self._attr_native_unit_of_measurement = None
             self._attr_icon = "mdi:alert-octagram"
             self._attr_device_class = None
             self._attr_state_class = None
-            self._attr_precision = None
-        elif key in ["pwr"]:
-            self._attr_unit_of_measurement = None
+            self._attr_suggested_display_precision = None
+        elif key == "pwr":
+            self._attr_native_unit_of_measurement = None
             self._attr_icon = "mdi:battery"
             self._attr_device_class = None
-            self._attr_state_class = "measurement"
-            self._attr_precision = 0 # 默认京都为0
+            self._attr_state_class = SensorStateClass.MEASUREMENT
+            self._attr_suggested_display_precision = 0
         else:
-            self._attr_unit_of_measurement = None
+            self._attr_native_unit_of_measurement = None
             self._attr_icon = "mdi:numeric"
             self._attr_device_class = None
-            self._attr_state_class = "measurement"
-            self._attr_precision = 0  # 默认精度为0
+            self._attr_state_class = SensorStateClass.MEASUREMENT
+            self._attr_suggested_display_precision = 0
+
+    async def async_added_to_hass(self):
+        """Write the latest state when the entity is added."""
+        await super().async_added_to_hass()
+        self.handle_event(None)
 
     @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
-
-    @property
-    def state(self):
-        """Return the state of the sensor."""
+    def native_value(self):
+        """Return the value reported by the sensor."""
         if self._key == "flt":
-            # 将状态值转换为整数
             int_state = int(self._state)
             if int_state == 0:
                 return "off"
-            # 将整数值转换为字符串并确保至少有2位数字
-            str_state = f"E{int_state:02}"
-            return str_state
-        return (
-            round(self._state, self._attr_precision)
-            if self._attr_precision is not None
-            else self._state
-        )
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return self._entity_id
-
-    @property
-    def icon(self):
-        return self._attr_icon
-
-    @property
-    def device_class(self):
-        """Return the device class of the sensor."""
-        return self._attr_device_class
-
-    @property
-    def state_class(self):
-        """Return the state class of the sensor."""
-        return self._attr_state_class
-
-    @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement."""
-        return self._attr_unit_of_measurement
+            return f"E{int_state:02}"
+        return self._state
 
     @staticmethod
     def _convert_to_number(value):
-        """Convert value to number if possible."""
+        """Convert a value to a number if possible."""
         if value == "":
             return 0
         try:
             return float(value)
-        except ValueError:
+        except (TypeError, ValueError):
             return 0
 
     def handle_event(self, event):
-        """Handle the custom event and update state."""
-        self.async_schedule_update_ha_state(True)
-
-    async def async_update(self):
-        """Fetch new state data for the sensor."""
-        data = self._hass.data[DOMAIN].get("data", {})
+        """Update the sensor from the latest integration data."""
+        data = self._hass.data.get(DOMAIN, {}).get("data", {})
         if self._key in data:
-            new_value = data[self._key]
-            new_value_converted = self._convert_to_number(new_value)
-            if new_value_converted != self._state:
-                self._state = new_value_converted
-                self.async_write_ha_state()
+            self._state = self._convert_to_number(data[self._key])
+        self.async_write_ha_state()
 
 
 class UDPMulticastBinarySensor(BinarySensorEntity):
-    """Representation of a UDP Multicast binary sensor."""
+    """Representation of a UDP multicast binary sensor."""
+
+    _attr_should_poll = False
+    _attr_device_class = None
 
     def __init__(
         self,
@@ -217,50 +185,24 @@ class UDPMulticastBinarySensor(BinarySensorEntity):
         self._hass = hass
         self._device = device
         self._key = key
-        self._name = f"boiler_{device}_{key}"
-        self._state = self._convert_to_boolean(initial_value)
-        self._entity_id = entity_id
+        self._attr_name = f"boiler_{device}_{key}"
+        self._attr_unique_id = entity_id
         self._attr_icon = "mdi:toggle-switch-variant"
+        self._attr_is_on = self._convert_to_boolean(initial_value)
 
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
-
-    @property
-    def icon(self):
-        return self._attr_icon
-
-    @property
-    def is_on(self):
-        """Return true if the binary sensor is on."""
-        return self._state
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return self._entity_id
-
-    @property
-    def device_class(self):
-        """Return the device class of the binary sensor."""
-        return "opening"
+    async def async_added_to_hass(self):
+        """Write the latest state when the entity is added."""
+        await super().async_added_to_hass()
+        self.handle_event(None)
 
     @staticmethod
     def _convert_to_boolean(value):
-        """Convert value to boolean."""
-        return value == 1
+        """Convert a value to a boolean."""
+        return value in (1, "1", True)
 
     def handle_event(self, event):
-        """Handle the custom event and update state."""
-        self.async_schedule_update_ha_state(True)
-
-    async def async_update(self):
-        """Fetch new state data for the binary sensor."""
-        data = self._hass.data[DOMAIN].get("data", {})
+        """Update the binary sensor from the latest integration data."""
+        data = self._hass.data.get(DOMAIN, {}).get("data", {})
         if self._key in data:
-            new_value = data[self._key]
-            new_value_converted = self._convert_to_boolean(new_value)
-            if new_value_converted != self._state:
-                self._state = new_value_converted
-                self.async_write_ha_state()
+            self._attr_is_on = self._convert_to_boolean(data[self._key])
+        self.async_write_ha_state()

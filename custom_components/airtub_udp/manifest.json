@@ -8,9 +8,9 @@
   "dependencies": [],
   "documentation": "https://github.com/zenz/airtub_ha_reader",
   "integration_type": "hub",
-  "iot_class": "local_polling",
+  "iot_class": "local_push",
   "issue_tracker": "https://github.com/zenz/airtub_ha_reader/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "2.0.19"
+  "version": "2.0.21"
 }
